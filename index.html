@@ -164,6 +164,12 @@ textarea{resize:vertical;min-height:60px;}
 .act-row:last-child{border-bottom:none;}
 .act-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 .act-time{color:var(--muted);font-size:0.7rem;min-width:45px;}
+.ad-slide{min-width:85%;scroll-snap-align:start;border-radius:14px;overflow:hidden;border:1px solid var(--border);position:relative;flex-shrink:0;}
+.ad-slide img{width:100%;height:160px;object-fit:cover;display:block;}
+.ad-slide .ad-cap{position:absolute;bottom:0;left:0;right:0;padding:8px 12px;background:linear-gradient(transparent,rgba(0,0,0,0.7));color:#fff;font-size:0.8rem;}
+.ad-item{display:flex;align-items:center;gap:9px;padding:9px;background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:7px;}
+.ad-item img{width:52px;height:42px;object-fit:cover;border-radius:7px;flex-shrink:0;}
+.ad-item-info{flex:1;min-width:0;font-size:0.8rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 </style>
 </head>
 <body>
@@ -262,6 +268,12 @@ textarea{resize:vertical;min-height:60px;}
 
   <!-- SERVICES -->
   <div class="panel active" id="panel-services">
+
+    <!-- سلايدر الدعايات -->
+    <div id="adsSlider" style="margin-bottom:13px;display:none;">
+      <div id="adsTrack" style="display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding-bottom:4px;"></div>
+    </div>
+
     <div class="sw" style="margin-bottom:13px;"><span class="si">🔍</span><input type="text" id="searchSvc" placeholder="ابحث عن خدمة..." oninput="renderServices()"></div>
     <div class="cat-scroll">
       <button class="cat-btn active" onclick="setCategory(this,'')">🔓 الكل</button>
@@ -419,6 +431,16 @@ textarea{resize:vertical;min-height:60px;}
 
   <!-- ADMIN -->
   <div class="panel" id="panel-admin">
+
+    <!-- إدارة الدعايات -->
+    <div class="adm-form" style="margin-bottom:14px;">
+      <div class="sec-title">🖼️ إدارة الدعايات</div>
+      <div style="font-size:0.78rem;color:var(--muted);margin-bottom:11px;">أضف صور دعايات تظهر للزبائن في الصفحة الرئيسية</div>
+      <div class="fg" style="margin-bottom:9px;"><label>🔗 رابط الصورة (URL)</label><input type="text" id="adUrl" placeholder="https://..."></div>
+      <div class="fg" style="margin-bottom:9px;"><label>📝 وصف (اختياري)</label><input type="text" id="adDesc" placeholder="وصف الدعاية..."></div>
+      <button onclick="addAd()" class="btn-p" style="margin-top:0;width:100%;">➕ إضافة دعاية</button>
+      <div id="adsList" style="margin-top:11px;"></div>
+    </div>
 
     <!-- طلبات التسجيل -->
     <!-- إعداد تيليغرام -->
@@ -692,6 +714,8 @@ const svcCol = collection(db, 'services');
 const cliCol = collection(db, 'clients');
 const ordCol = collection(db, 'orders');
 const regCol = collection(db, 'registrations');
+const adsCol = collection(db, 'ads');
+let ads = [];
 
 const ADMIN_HASH = '5310bdd51ae8fdbd5f6be4fceb8cff80df3a658ac3e129997d96e78180367dd2';
 
@@ -766,7 +790,51 @@ function loadRealtime(){
     renderPending();
     if(currentUser?.isAdmin) updateDashboard();
   });
+  onSnapshot(query(adsCol, orderBy('createdAt','asc')), snap=>{
+    ads=snap.docs.map(d=>({...d.data(),fid:d.id}));
+    renderAdsSlider();
+    renderAdsList();
+  });
 }
+
+function renderAdsSlider(){
+  const track=document.getElementById('adsTrack');
+  const slider=document.getElementById('adsSlider');
+  if(!track||!slider) return;
+  if(!ads.length){slider.style.display='none';return;}
+  slider.style.display='block';
+  track.innerHTML=ads.map(a=>`
+    <div class="ad-slide">
+      <img src="${a.url}" alt="${a.desc||''}" onerror="this.parentElement.style.display='none'">
+      ${a.desc?`<div class="ad-cap">${a.desc}</div>`:''}
+    </div>`).join('');
+}
+
+function renderAdsList(){
+  const el=document.getElementById('adsList');
+  if(!el) return;
+  if(!ads.length){el.innerHTML='<div style="text-align:center;color:var(--muted);font-size:0.8rem;padding:10px;">لا توجد دعايات</div>';return;}
+  el.innerHTML=ads.map(a=>`
+    <div class="ad-item">
+      <img src="${a.url}" onerror="this.src='https://via.placeholder.com/52x42?text=X'">
+      <div class="ad-item-info">${a.desc||a.url}</div>
+      <button class="ib del" onclick="delAd('${a.fid}')">🗑</button>
+    </div>`).join('');
+}
+
+window.addAd = async()=>{
+  const url=document.getElementById('adUrl').value.trim();
+  const desc=document.getElementById('adDesc').value.trim();
+  if(!url){alert('يرجى إدخال رابط الصورة');return;}
+  await addDoc(adsCol,{url,desc,createdAt:Date.now()});
+  document.getElementById('adUrl').value='';
+  document.getElementById('adDesc').value='';
+};
+
+window.delAd = async(fid)=>{
+  if(!confirm('حذف هذه الدعاية؟')) return;
+  await deleteDoc(doc(db,'ads',fid));
+};
 
 // ===== LOGIN =====
 window.doLogin = async () => {
@@ -947,7 +1015,7 @@ window.openOrder = fid => {
   document.getElementById('oNote').value='';
 
   // إظهار الحقول حسب الخدمة
-  const needPhonePass = s.needPhone || s.needPass || s.category==='خدمات FRP' || s.category==='تفعيل أدوات';
+  const needPhonePass = s.needPhone || s.needPass;
   const hasFields=s.needImei||s.needSn||s.needUsername||s.needEmail||needPhonePass;
   document.getElementById('oFieldsBox').style.display=hasFields?'block':'none';
   const showF=(id,show)=>{const b=document.getElementById(id);if(b)b.style.display=show?'block':'none';};
@@ -955,8 +1023,8 @@ window.openOrder = fid => {
   showF('oSnBox',s.needSn); if(document.getElementById('oSn'))document.getElementById('oSn').value='';
   showF('oUsernameBox',s.needUsername); if(document.getElementById('oUsername'))document.getElementById('oUsername').value='';
   showF('oEmailBox',s.needEmail); if(document.getElementById('oEmail'))document.getElementById('oEmail').value='';
-  showF('oPhoneBox',s.needPhone||s.category==='خدمات FRP'||s.category==='تفعيل أدوات'); if(document.getElementById('oPhone'))document.getElementById('oPhone').value='';
-  showF('oPassBox',s.needPass||s.category==='خدمات FRP'||s.category==='تفعيل أدوات'); if(document.getElementById('oPass'))document.getElementById('oPass').value='';
+  showF('oPhoneBox',s.needPhone); if(document.getElementById('oPhone'))document.getElementById('oPhone').value='';
+  showF('oPassBox',s.needPass); if(document.getElementById('oPass'))document.getElementById('oPass').value='';
 
   document.getElementById('oS1').style.display='block';
   document.getElementById('oS2').style.display='none';
@@ -993,7 +1061,7 @@ window.confirmOrder = async () => {
   if(after<0) return;
 
   // التحقق من الحقول المطلوبة
-  const needPhonePass2 = s.needPhone || s.needPass || s.category==='خدمات FRP' || s.category==='تفعيل أدوات';
+  const needPhonePass2 = s.needPhone || s.needPass;
   const needImei=s.needImei, needSn=s.needSn, needUsername=s.needUsername, needEmail=s.needEmail;
   const imei=document.getElementById('oImei')?.value.trim()||'';
   const sn=document.getElementById('oSn')?.value.trim()||'';
