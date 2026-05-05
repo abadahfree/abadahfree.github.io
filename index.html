@@ -1033,8 +1033,10 @@ function updateUserBar(){
   if(!currentUser.isAdmin){
     const me=clients.find(c=>c.fid===currentUser.fid);
     const cur=me?.currency||'LYD';
-    const bal=cur==='USDT'?(me?.balanceUSDT||0):(me?.balance||0);
-    const balLabel=cur==='USDT'?`${bal.toFixed(2)} USDT`:`${bal.toLocaleString('ar-LY')} د.ل`;
+    const balLYD=me?.balance||0;
+    // دائماً نحسب USDT من الدينار باستخدام سعر الصرف الحالي
+    const balUSDT=usdtRate>0?parseFloat((balLYD/usdtRate).toFixed(2)):0;
+    const balLabel=cur==='USDT'?`${balUSDT.toFixed(2)} USDT`:`${balLYD.toLocaleString('ar-LY')} د.ل`;
     document.getElementById('uBal').textContent=`رصيد: ${balLabel}`;
     document.getElementById('profName').textContent=currentUser.name;
     document.getElementById('profEmail').textContent=currentUser.email||'';
@@ -1110,8 +1112,8 @@ window.openOrder = fid => {
   const s=currentSvc;
   const me=currentUser?.isAdmin?null:clients.find(c=>c.fid===currentUser?.fid);
   const cur=me?.currency||'LYD';
-  const bal=cur==='USDT'?(me?.balanceUSDT||0):(me?.balance||0);
-  const dispPrice=cur==='USDT'?(s.price/usdtRate).toFixed(2)+' USDT':s.price.toLocaleString('ar-LY')+' د.ل';
+  const balLYD=me?.balance||0;
+  const bal=cur==='USDT'?parseFloat((balLYD/usdtRate).toFixed(2)):balLYD;
   const dispBal=cur==='USDT'?bal.toFixed(2)+' USDT':bal.toLocaleString('ar-LY')+' د.ل';
 
   const ic=document.getElementById('oIc');
