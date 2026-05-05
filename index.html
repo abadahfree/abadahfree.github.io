@@ -209,6 +209,27 @@ textarea{resize:vertical;min-height:60px;}
     <div class="fg" style="margin-bottom:9px;text-align:right;"><label>رقم الهاتف *</label><input type="tel" id="regPhone" placeholder="0915494342"></div>
     <div class="fg" style="margin-bottom:9px;text-align:right;"><label>البريد الإلكتروني *</label><input type="email" id="regEmail" placeholder="example@email.com"></div>
     <div class="fg" style="margin-bottom:16px;text-align:right;"><label>كلمة السر *</label><input type="password" id="regPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doRegister()"></div>
+    <div class="fg" style="margin-bottom:16px;text-align:right;">
+      <label>💱 العملة المفضلة *</label>
+      <div style="display:flex;gap:10px;margin-top:8px;">
+        <label onclick="document.getElementById('curLYD').checked=true" style="flex:1;cursor:pointer;">
+          <div id="curLYDBox" style="border:2px solid var(--cyan);border-radius:12px;padding:12px;text-align:center;background:rgba(0,212,255,0.08);">
+            <div style="font-size:1.4rem;">🇱🇾</div>
+            <div style="font-size:0.85rem;font-weight:700;margin-top:4px;">دينار ليبي</div>
+            <div style="font-size:0.7rem;color:var(--muted);">LYD</div>
+          </div>
+          <input type="radio" id="curLYD" name="regCurrency" value="LYD" style="display:none;" checked onchange="updateCurSel()">
+        </label>
+        <label onclick="document.getElementById('curUSDT').checked=true;updateCurSel()" style="flex:1;cursor:pointer;">
+          <div id="curUSDTBox" style="border:2px solid var(--border);border-radius:12px;padding:12px;text-align:center;">
+            <div style="font-size:1.4rem;">💵</div>
+            <div style="font-size:0.85rem;font-weight:700;margin-top:4px;">USDT</div>
+            <div style="font-size:0.7rem;color:var(--muted);">Tether</div>
+          </div>
+          <input type="radio" id="curUSDT" name="regCurrency" value="USDT" style="display:none;" onchange="updateCurSel()">
+        </label>
+      </div>
+    </div>
     <button onclick="doRegister()" class="btn-p" id="regBtn">📤 إرسال طلب التسجيل</button>
     <div style="margin-top:12px;">
       <button onclick="showLogin()" style="background:none;border:none;color:var(--muted);font-family:'Tajawal',sans-serif;font-size:0.82rem;cursor:pointer;">← العودة لتسجيل الدخول</button>
@@ -766,6 +787,19 @@ function resetFails(){setLiState({n:0});}
 const ADMIN_EMAIL = 'abadah@admin.com';
 
 let services=[], clients=[], orders=[], regs=[];
+let usdtRate = 5; // سعر افتراضي 1 USDT = 5 د.ل
+
+// جلب سعر الصرف USDT/LYD
+async function fetchUsdtRate(){
+  try{
+    const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=usd');
+    const d=await r.json();
+    // سعر تقريبي: 1 USD ≈ 4.85 د.ل (ثابت نسبياً)
+    const usdLyd=4.85;
+    usdtRate=usdLyd; // 1 USDT ≈ 1 USD ≈ 4.85 د.ل
+  }catch(e){ usdtRate=5; }
+}
+fetchUsdtRate();
 let currentUser=null, currentSvc=null, currentChgClient=null;
 let activeCat='', pinInput='', adminUnlocked=false;
 
@@ -922,6 +956,14 @@ window.doLogin = async () => {
 };
 
 // ===== REGISTER =====
+window.updateCurSel=()=>{
+  const isUSDT=document.getElementById('curUSDT').checked;
+  document.getElementById('curLYDBox').style.border=isUSDT?'2px solid var(--border)':'2px solid var(--cyan)';
+  document.getElementById('curLYDBox').style.background=isUSDT?'':'rgba(0,212,255,0.08)';
+  document.getElementById('curUSDTBox').style.border=isUSDT?'2px solid var(--cyan)':'2px solid var(--border)';
+  document.getElementById('curUSDTBox').style.background=isUSDT?'rgba(0,212,255,0.08)':'';
+};
+
 window.doRegister = async () => {
   const name=document.getElementById('regName').value.trim();
   const phone=document.getElementById('regPhone').value.trim();
@@ -935,7 +977,7 @@ window.doRegister = async () => {
     const ex=await getDocs(query(cliCol,where('email','==',email)));
     if(!ex.empty){ document.getElementById('regErr').textContent='❌ هذا الإيميل مسجل مسبقاً'; btn.textContent='📤 إرسال طلب التسجيل'; btn.disabled=false; return; }
     // Add to registrations (pending)
-    await addDoc(cliCol,{name,phone,email,password:pass,balance:0,status:'pending',createdAt:Date.now()});
+    await addDoc(cliCol,{name,phone,email,password:pass,balance:0,balanceUSDT:0,currency:document.querySelector('input[name="regCurrency"]:checked')?.value||'LYD',status:'pending',createdAt:Date.now()});
     // Notify admin via WhatsApp
     const msg=encodeURIComponent(`🆕 *طلب تسجيل جديد - Abadah Unlocker*\n👤 *الاسم:* ${name}\n📞 *الهاتف:* ${phone}\n📧 *الإيميل:* ${email}\n⏳ انتظر موافقتك`);
     window.open(`https://wa.me/218915494342?text=${msg}`,'_blank');
@@ -962,12 +1004,14 @@ function updateUserBar(){
   document.getElementById('uName').textContent=currentUser.name;
   if(!currentUser.isAdmin){
     const me=clients.find(c=>c.fid===currentUser.fid);
-    const bal=me?.balance||0;
-    document.getElementById('uBal').textContent=`رصيد: ${bal.toLocaleString('ar-LY')} د.ل`;
+    const cur=me?.currency||'LYD';
+    const bal=cur==='USDT'?(me?.balanceUSDT||0):(me?.balance||0);
+    const balLabel=cur==='USDT'?`${bal.toFixed(2)} USDT`:`${bal.toLocaleString('ar-LY')} د.ل`;
+    document.getElementById('uBal').textContent=`رصيد: ${balLabel}`;
     document.getElementById('profName').textContent=currentUser.name;
     document.getElementById('profEmail').textContent=currentUser.email||'';
     document.getElementById('profPhone').textContent=currentUser.phone||'';
-    document.getElementById('profBal').textContent=bal.toLocaleString('ar-LY');
+    document.getElementById('profBal').textContent=balLabel;
   } else {
     document.getElementById('uBal').textContent='مسؤول النظام';
   }
@@ -1023,7 +1067,7 @@ function renderServices(){
         <div class="svc-name">${s.name}</div>
         <div class="svc-desc">${s.desc||'خدمة احترافية سريعة وموثوقة'}</div>
         <div class="svc-row">
-          <div class="svc-price">${s.price.toLocaleString('ar-LY')} <span>د.ل</span></div>
+          <div class="svc-price">${(()=>{const me=clients.find(c=>c.fid===currentUser?.fid);const cur=me?.currency||'LYD';if(cur==='USDT'){const p=(s.price/usdtRate);return p.toFixed(2)+' <span>USDT</span>';}return s.price.toLocaleString('ar-LY')+' <span>د.ل</span>';})()}</div>
           <button class="btn-order" onclick="openOrder('${s.fid}')">اطلب الخدمة</button>
         </div>
       </div>`).join('');
@@ -1037,15 +1081,18 @@ window.openOrder = fid => {
   if(!currentSvc) return;
   const s=currentSvc;
   const me=currentUser?.isAdmin?null:clients.find(c=>c.fid===currentUser?.fid);
-  const bal=me?.balance||0;
+  const cur=me?.currency||'LYD';
+  const bal=cur==='USDT'?(me?.balanceUSDT||0):(me?.balance||0);
+  const dispPrice=cur==='USDT'?(s.price/usdtRate).toFixed(2)+' USDT':s.price.toLocaleString('ar-LY')+' د.ل';
+  const dispBal=cur==='USDT'?bal.toFixed(2)+' USDT':bal.toLocaleString('ar-LY')+' د.ل';
 
   const ic=document.getElementById('oIc');
   if(s.image){ic.innerHTML=`<img src="${s.image}" style="width:65px;height:65px;object-fit:cover;border-radius:11px;">`;}
   else{ic.textContent=s.icon;}
   document.getElementById('oNm').textContent=s.name;
   document.getElementById('oDsc').textContent=s.desc||'';
-  document.getElementById('oBal').textContent=`${bal.toLocaleString('ar-LY')} د.ل`;
-  document.getElementById('oPr').textContent=`${s.price.toLocaleString('ar-LY')} د.ل`;
+  document.getElementById('oBal').textContent=dispBal;
+  document.getElementById('oPr').textContent=dispPrice;
   document.getElementById('oQty').value='1';
   document.getElementById('oNote').value='';
 
@@ -1089,11 +1136,14 @@ window.confirmOrder = async () => {
   if(!s||!currentUser||currentUser.isAdmin) return;
   const me=clients.find(c=>c.fid===currentUser.fid);
   if(!me){alert('خطأ في الحساب');return;}
-  const bal=me.balance||0;
+  const cur=me.currency||'LYD';
   const qty=parseInt(document.getElementById('oQty').value)||1;
-  const total=s.price*qty;
-  const after=bal-total;
-  if(after<0) return;
+  const totalLYD=s.price*qty;
+  const totalUSDT=parseFloat((totalLYD/usdtRate).toFixed(4));
+  const bal=cur==='USDT'?(me.balanceUSDT||0):(me.balance||0);
+  const total=cur==='USDT'?totalUSDT:totalLYD;
+  const after=parseFloat((bal-total).toFixed(4));
+  if(after<0){alert('⚠️ رصيدك غير كافٍ');return;}
 
   // التحقق من الحقول المطلوبة
   const needPhonePass2 = s.needPhone || s.needPass;
@@ -1115,14 +1165,15 @@ window.confirmOrder = async () => {
   btn.disabled=true; btn.textContent='جاري الإرسال...';
 
   try {
-    await updateDoc(doc(db,'clients',me.fid),{balance:after});
+    const updateData=cur==='USDT'?{balanceUSDT:after}:{balance:after};
+    await updateDoc(doc(db,'clients',me.fid),updateData);
     const note=document.getElementById('oNote').value.trim();
     const t=Date.now();
     await addDoc(ordCol,{
       clientFid:currentUser.fid, clientName:currentUser.name,
       clientEmail:currentUser.email, clientPhone:currentUser.phone||'',
       serviceFid:s.fid, serviceName:s.name,
-      price:s.price, qty, total,
+      price:s.price, qty, total:totalLYD, totalUSDT, currency:cur,
       balanceBefore:bal, balanceAfter:after,
       note:note||'', imei:imei||'', sn:sn||'',
       username:username||'', email:email||'',
