@@ -274,7 +274,7 @@ textarea{resize:vertical;min-height:60px;}
       <div id="adsTrack" style="display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding-bottom:4px;"></div>
     </div>
 
-    <div class="sw" style="margin-bottom:13px;"><span class="si">🔍</span><input type="text" id="searchSvc" placeholder="ابحث عن خدمة..." oninput="renderServices()"></div>
+    <div class="sw" style="margin-bottom:13px;"><span class="si">🔍</span><input type="text" id="searchSvc" placeholder="ابحث عن خدمة..." oninput="activeCat='';document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));document.querySelector('.cat-btn').classList.add('active');renderServices()"></div>
     <div class="cat-scroll">
       <button class="cat-btn active" onclick="setCategory(this,'')">🔓 الكل</button>
       <button class="cat-btn" onclick="setCategory(this,'إيجار أدوات')">🔧 إيجار أدوات</button>
@@ -692,6 +692,41 @@ textarea{resize:vertical;min-height:60px;}
     </div>
     <div class="fg" style="margin-bottom:11px;text-align:right;"><label>المبلغ (د.ل)</label><input type="number" id="chgAmt" placeholder="100" min="1" style="text-align:center;font-size:1.05rem;"></div>
     <button onclick="confirmCharge()" class="btn-p">✅ شحن الرصيد</button>
+  </div>
+</div>
+
+<!-- EDIT SERVICE MODAL -->
+<div class="mo" id="editSvcMo" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="md" style="max-width:420px;">
+    <button class="mc" onclick="document.getElementById('editSvcMo').classList.remove('open')">✕</button>
+    <div style="font-size:1.1rem;font-weight:700;margin-bottom:16px;color:var(--cyan);">✏️ تعديل الخدمة</div>
+    <input type="hidden" id="eFid">
+    <div class="form-grid" style="margin-bottom:9px;">
+      <div class="fg"><label>اسم الخدمة</label><input type="text" id="eName" placeholder="اسم الخدمة"></div>
+      <div class="fg"><label>السعر (د.ل)</label><input type="number" id="ePrice" placeholder="0" min="0"></div>
+    </div>
+    <div class="fg" style="margin-bottom:9px;"><label>الوصف</label><input type="text" id="eDesc" placeholder="وصف الخدمة..."></div>
+    <div class="fg" style="margin-bottom:9px;"><label>التصنيف</label>
+      <select id="eCat" style="width:100%;padding:11px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Tajawal',sans-serif;">
+        <option value="إيجار أدوات">🔧 إيجار أدوات</option>
+        <option value="تفعيل أدوات">⚡ تفعيل أدوات</option>
+        <option value="خدمات FRP">🛡️ خدمات FRP</option>
+        <option value="خدمات iCloud">☁️ خدمات iCloud</option>
+        <option value="خدمات حسابات">👤 خدمات حسابات</option>
+      </select>
+    </div>
+    <div style="margin-bottom:11px;">
+      <div style="font-size:0.78rem;color:var(--muted);margin-bottom:7px;">📋 الحقول المطلوبة:</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        <label class="field-toggle"><input type="checkbox" id="efImei"> 📱 IMEI</label>
+        <label class="field-toggle"><input type="checkbox" id="efSn"> 🔢 SN</label>
+        <label class="field-toggle"><input type="checkbox" id="efUsername"> 👤 Username</label>
+        <label class="field-toggle"><input type="checkbox" id="efEmail"> 📧 Email</label>
+        <label class="field-toggle"><input type="checkbox" id="efPhone"> 📞 الهاتف</label>
+        <label class="field-toggle"><input type="checkbox" id="efPass"> 🔑 كلمة السر</label>
+      </div>
+    </div>
+    <button onclick="saveEditSvc()" class="btn-p" style="width:100%;margin-top:0;">💾 حفظ التعديلات</button>
   </div>
 </div>
 
@@ -1253,6 +1288,7 @@ function renderAdmin(){
         <label class="eib">🖼️ ${s.image?'تغيير':'إضافة'}<input type="file" accept="image/*" style="display:none" onchange="changeImg('${s.fid}',this)"></label>
       </div>
       <div class="ali-ac">
+        <button class="ib" onclick="openEditSvc('${s.fid}')">✏️</button>
         <button class="ib" onclick="toggleSvc('${s.fid}')">${s.active?'⏸':'▶️'}</button>
         <button class="ib del" onclick="delSvc('${s.fid}')">🗑</button>
       </div>
@@ -1284,7 +1320,42 @@ window.addService=async()=>{
 };
 window.toggleSvc=async fid=>{const s=services.find(x=>x.fid===fid);if(s)await updateDoc(doc(db,'services',fid),{active:!s.active});};
 window.delSvc=async fid=>{if(confirm('حذف هذه الخدمة؟'))await deleteDoc(doc(db,'services',fid));};
-window.clearAllSvc=async()=>{if(!services.length)return;if(confirm('حذف جميع الخدمات؟'))for(const s of services)await deleteDoc(doc(db,'services',s.fid));};
+
+window.openEditSvc=fid=>{
+  const s=services.find(x=>x.fid===fid);
+  if(!s) return;
+  document.getElementById('eFid').value=fid;
+  document.getElementById('eName').value=s.name||'';
+  document.getElementById('ePrice').value=s.price||'';
+  document.getElementById('eDesc').value=s.desc||'';
+  document.getElementById('eCat').value=s.category||'إيجار أدوات';
+  document.getElementById('efImei').checked=!!s.needImei;
+  document.getElementById('efSn').checked=!!s.needSn;
+  document.getElementById('efUsername').checked=!!s.needUsername;
+  document.getElementById('efEmail').checked=!!s.needEmail;
+  document.getElementById('efPhone').checked=!!s.needPhone;
+  document.getElementById('efPass').checked=!!s.needPass;
+  document.getElementById('editSvcMo').classList.add('open');
+};
+
+window.saveEditSvc=async()=>{
+  const fid=document.getElementById('eFid').value;
+  const name=document.getElementById('eName').value.trim();
+  const price=document.getElementById('ePrice').value.trim();
+  if(!name||!price){alert('يرجى إدخال الاسم والسعر');return;}
+  await updateDoc(doc(db,'services',fid),{
+    name, price:parseFloat(price),
+    desc:document.getElementById('eDesc').value.trim(),
+    category:document.getElementById('eCat').value,
+    needImei:document.getElementById('efImei').checked,
+    needSn:document.getElementById('efSn').checked,
+    needUsername:document.getElementById('efUsername').checked,
+    needEmail:document.getElementById('efEmail').checked,
+    needPhone:document.getElementById('efPhone').checked,
+    needPass:document.getElementById('efPass').checked,
+  });
+  document.getElementById('editSvcMo').classList.remove('open');
+};
 window.changeImg=(fid,input)=>{const file=input.files[0];if(!file)return;const r=new FileReader();r.onload=async e=>await updateDoc(doc(db,'services',fid),{image:e.target.result});r.readAsDataURL(file);};
 window.previewImg=input=>{const file=input.files[0];if(!file)return;const r=new FileReader();r.onload=e=>{document.getElementById('imgPrev').src=e.target.result;document.getElementById('imgPrev').style.display='block';document.getElementById('imgPH').style.display='none';document.getElementById('clrImgBtn').style.display='block';};r.readAsDataURL(file);};
 window.clearImg=()=>{document.getElementById('aImg').value='';document.getElementById('imgPrev').src='';document.getElementById('imgPrev').style.display='none';document.getElementById('imgPH').style.display='block';document.getElementById('clrImgBtn').style.display='none';};
@@ -1421,6 +1492,7 @@ function updateDashboard(){
     // اسم الخدمة من serviceName أو serviceId
     const svcName = o.serviceName || o.serviceId || '—';
     const cliName = o.clientName || o.username || o.email || '—';
+    const actBtns = o.status==='pending'?`<div style="display:flex;gap:5px;margin-top:6px;">${o.status!=='processing'?`<button onclick="setOrderStatus('${o.fid}','processing')" style="flex:1;padding:5px;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);border-radius:7px;color:var(--cyan);font-size:0.72rem;cursor:pointer;font-family:'Tajawal',sans-serif;">🔄 معالجة</button>`:''}<button onclick="setOrderStatus('${o.fid}','completed')" style="flex:1;padding:5px;background:rgba(0,230,118,0.1);border:1px solid rgba(0,230,118,0.3);border-radius:7px;color:var(--green);font-size:0.72rem;cursor:pointer;font-family:'Tajawal',sans-serif;">✅ موافقة</button><button onclick="setOrderStatus('${o.fid}','rejected')" style="flex:1;padding:5px;background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.3);border-radius:7px;color:var(--red);font-size:0.72rem;cursor:pointer;font-family:'Tajawal',sans-serif;">❌ رفض</button></div>`:'';
     return `<div class="dash-ord">
       <div class="dash-ord-ic" style="background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.15);">${s.ic}</div>
       <div style="flex:1;min-width:0;">
@@ -1431,7 +1503,7 @@ function updateDashboard(){
         <span class="chip ${s.cls}">${s.label}</span>
         <span style="font-size:0.7rem;color:var(--gold);font-family:'Orbitron',sans-serif;">${(o.total||o.price||0)} د.ل</span>
       </div>
-    </div>`;
+    </div>${actBtns}`;
   }).join('') : '<div style="color:var(--muted);font-size:0.78rem;text-align:center;padding:14px;">لا توجد طلبات</div>';
 
   // إيرادات الخدمات — من serviceName لأنه ما في serviceCategory
@@ -1507,6 +1579,7 @@ function renderClientsTab(){
           <span class="chip cg">💰 ${(c.balance||0).toLocaleString('ar-LY')} د.ل</span>
         </div>
         <div style="font-size:0.76rem;color:var(--muted);margin-top:3px;">📧 ${c.email||'—'} · 📞 ${c.phone||'—'}</div>
+        ${c.status==='pending'?`<div style="display:flex;gap:5px;margin-top:7px;"><button onclick="approveClient('${c.fid}')" style="flex:1;padding:6px;background:rgba(0,230,118,0.1);border:1px solid rgba(0,230,118,0.3);border-radius:7px;color:var(--green);font-size:0.76rem;cursor:pointer;font-family:'Tajawal',sans-serif;">✅ موافقة</button><button onclick="rejectClient('${c.fid}')" style="flex:1;padding:6px;background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.3);border-radius:7px;color:var(--red);font-size:0.76rem;cursor:pointer;font-family:'Tajawal',sans-serif;">❌ رفض</button></div>`:''}
       </div>
       <div class="ali-ac">
         <button class="ib" onclick="openCharge('${c.fid}')" style="color:var(--gold);border-color:rgba(245,200,66,0.3);">💰</button>
