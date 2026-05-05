@@ -171,7 +171,6 @@ textarea{resize:vertical;min-height:60px;}
 .ad-item img{width:52px;height:42px;object-fit:cover;border-radius:7px;flex-shrink:0;}
 .ad-item-info{flex:1;min-width:0;font-size:0.8rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 </head>
 <body>
 
@@ -240,27 +239,6 @@ textarea{resize:vertical;min-height:60px;}
 </div>
 
 <!-- PENDING -->
-
-<div id="verifyScreen" class="screen" style="display:none;">
-  <div class="auth-box">
-    <div style="font-size:2.8rem;margin-bottom:12px;">📧</div>
-    <div class="brand">تحقق من بريدك</div>
-    <p style="color:var(--muted);font-size:0.82rem;margin-bottom:8px;">تم إرسال رمز تحقق من 6 أرقام إلى</p>
-    <p id="verifyEmailShow" style="color:var(--cyan);font-size:0.85rem;font-weight:700;margin-bottom:22px;">—</p>
-    <div class="fg" style="margin-bottom:16px;text-align:center;">
-      <input type="text" id="verifyCode" placeholder="أدخل الرمز المكون من 6 أرقام" maxlength="6" style="text-align:center;font-size:1.4rem;letter-spacing:8px;font-family:'Orbitron',sans-serif;" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
-    </div>
-    <button onclick="confirmVerify()" class="btn-p" id="verifyBtn">✅ تأكيد الرمز</button>
-    <div style="margin-top:12px;">
-      <button onclick="resendCode()" style="background:none;border:none;color:var(--cyan);font-family:'Tajawal',sans-serif;font-size:0.82rem;cursor:pointer;" id="resendBtn">🔄 إعادة إرسال الرمز</button>
-    </div>
-    <div style="margin-top:8px;">
-      <button onclick="showRegister()" style="background:none;border:none;color:var(--muted);font-family:'Tajawal',sans-serif;font-size:0.82rem;cursor:pointer;">← العودة للتسجيل</button>
-    </div>
-    <div id="verifyErr" style="color:var(--red);font-size:0.8rem;margin-top:8px;min-height:16px;text-align:center;"></div>
-  </div>
-</div>
-
 <div id="pendingScreen" class="screen" style="display:none;">
   <div class="auth-box">
     <div style="font-size:3rem;margin-bottom:14px;">⏳</div>
@@ -1014,37 +992,6 @@ window.updateCurSel=()=>{
   document.getElementById('curUSDTBox').style.background=isUSDT?'rgba(0,212,255,0.08)':'';
 };
 
-// ===== EmailJS Config =====
-const EJS_SVC = 'service_pdla1rj';
-const EJS_TPL = 'template_4fvnwxk';
-const EJS_KEY = '9l3b5ZWmgWALrnV9z';
-// تهيئة EmailJS مرة واحدة
-window.addEventListener('load', () => { if(typeof emailjs !== 'undefined') emailjs.init(EJS_KEY); });
-
-let pendingReg = null; // بيانات التسجيل المعلقة
-let verifyCodeSent = ''; // الرمز المرسل
-let verifyExpiry = 0; // وقت انتهاء الرمز
-
-function generateCode(){ return Math.floor(100000+Math.random()*900000).toString(); }
-
-function showVerify(){
-  hide('loginScreen'); hide('registerScreen'); hide('pendingScreen'); hide('mainApp');
-  document.getElementById('verifyScreen').style.display='flex';
-}
-function hideVerify(){ document.getElementById('verifyScreen').style.display='none'; }
-
-async function sendVerifyEmail(email, code){
-  if(typeof emailjs === 'undefined') throw new Error('EmailJS غير محمل');
-  emailjs.init(EJS_KEY);
-  const result = await emailjs.send(EJS_SVC, EJS_TPL, {
-    to_email: email,
-    to_name: pendingReg?.name || '',
-    code: code,
-    message: `رمز التحقق الخاص بك هو: ${code} - صالح لمدة 10 دقائق.`
-  });
-  return result;
-}
-
 window.doRegister = async () => {
   const name=document.getElementById('regName').value.trim();
   const phone=document.getElementById('regPhone').value.trim();
@@ -1054,73 +1001,19 @@ window.doRegister = async () => {
   const btn=document.getElementById('regBtn');
   btn.textContent='جاري الإرسال...'; btn.disabled=true;
   try {
+    // Check if email exists
     const ex=await getDocs(query(cliCol,where('email','==',email)));
     if(!ex.empty){ document.getElementById('regErr').textContent='❌ هذا الإيميل مسجل مسبقاً'; btn.textContent='📤 إرسال طلب التسجيل'; btn.disabled=false; return; }
-
-    // حفظ البيانات مؤقتاً وإرسال رمز التحقق
-    const code = generateCode();
-    pendingReg = {name, phone, email, pass, currency: document.querySelector('input[name="regCurrency"]:checked')?.value||'LYD'};
-    verifyCodeSent = code;
-    verifyExpiry = Date.now() + 10*60*1000; // 10 دقائق
-
-    try {
-      await sendVerifyEmail(email, code);
-    } catch(ejsErr) {
-      document.getElementById('regErr').textContent = 'خطأ EmailJS: ' + (ejsErr?.text || ejsErr?.message || JSON.stringify(ejsErr));
-      btn.textContent='📤 إرسال طلب التسجيل'; btn.disabled=false;
-      return;
-    }
-
-    document.getElementById('verifyEmailShow').textContent = email;
-    document.getElementById('verifyErr').textContent = '';
-    document.getElementById('verifyCode').value = '';
-    showVerify();
-    btn.textContent='📤 إرسال طلب التسجيل'; btn.disabled=false;
-  } catch(e){
-    console.error(e);
-    document.getElementById('regErr').textContent='خطأ في الإرسال، تحقق من البريد وحاول مجدداً';
-    btn.textContent='📤 إرسال طلب التسجيل'; btn.disabled=false;
-  }
-};
-
-window.confirmVerify = async () => {
-  const code = document.getElementById('verifyCode').value.trim();
-  const errEl = document.getElementById('verifyErr');
-  if(!code){ errEl.textContent='يرجى إدخال الرمز'; return; }
-  if(Date.now() > verifyExpiry){ errEl.textContent='❌ انتهت صلاحية الرمز، أعد الإرسال'; return; }
-  if(code !== verifyCodeSent){ errEl.textContent='❌ الرمز غير صحيح، حاول مجدداً'; return; }
-
-  const btn=document.getElementById('verifyBtn');
-  btn.textContent='جاري التسجيل...'; btn.disabled=true;
-  try {
-    const {name,phone,email,pass,currency} = pendingReg;
-    await addDoc(cliCol,{name,phone,email,password:pass,balance:0,balanceUSDT:0,currency,status:'pending',createdAt:Date.now()});
-    const msg=encodeURIComponent(`🆕 *طلب تسجيل جديد - Abadah Unlocker*\n👤 *الاسم:* ${name}\n📞 *الهاتف:* ${phone}\n📧 *الإيميل:* ${email}\n✅ تم التحقق من البريد\n⏳ انتظر موافقتك`);
+    // Add to registrations (pending)
+    await addDoc(cliCol,{name,phone,email,password:pass,balance:0,balanceUSDT:0,currency:document.querySelector('input[name="regCurrency"]:checked')?.value||'LYD',status:'pending',createdAt:Date.now()});
+    // Notify admin via WhatsApp
+    const msg=encodeURIComponent(`🆕 *طلب تسجيل جديد - Abadah Unlocker*\n👤 *الاسم:* ${name}\n📞 *الهاتف:* ${phone}\n📧 *الإيميل:* ${email}\n⏳ انتظر موافقتك`);
     window.open(`https://wa.me/218915494342?text=${msg}`,'_blank');
-    pendingReg=null; verifyCodeSent='';
-    hideVerify();
     showPending();
   } catch(e){
-    errEl.textContent='خطأ، حاول مجدداً';
-    btn.textContent='✅ تأكيد الرمز'; btn.disabled=false;
+    document.getElementById('regErr').textContent='خطأ في الإرسال، حاول مجدداً';
+    btn.textContent='📤 إرسال طلب التسجيل'; btn.disabled=false;
   }
-};
-
-window.resendCode = async () => {
-  if(!pendingReg){ showRegister(); return; }
-  const btn=document.getElementById('resendBtn');
-  btn.textContent='جاري الإرسال...'; btn.disabled=true;
-  const code = generateCode();
-  verifyCodeSent = code;
-  verifyExpiry = Date.now() + 10*60*1000;
-  try {
-    await sendVerifyEmail(pendingReg.email, code);
-    document.getElementById('verifyErr').textContent='✅ تم إعادة الإرسال!';
-    setTimeout(()=>document.getElementById('verifyErr').textContent='',3000);
-  } catch(e){
-    document.getElementById('verifyErr').textContent='فشل الإرسال، حاول مجدداً';
-  }
-  btn.textContent='🔄 إعادة إرسال الرمز'; btn.disabled=false;
 };
 
 window.doLogout = () => {
