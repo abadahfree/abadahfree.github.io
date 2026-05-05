@@ -1113,8 +1113,9 @@ window.openOrder = fid => {
   const me=currentUser?.isAdmin?null:clients.find(c=>c.fid===currentUser?.fid);
   const cur=me?.currency||'LYD';
   const balLYD=me?.balance||0;
-  const bal=cur==='USDT'?parseFloat((balLYD/usdtRate).toFixed(2)):balLYD;
-  const dispBal=cur==='USDT'?bal.toFixed(2)+' USDT':bal.toLocaleString('ar-LY')+' د.ل';
+  const balUSDT=usdtRate>0?parseFloat((balLYD/usdtRate).toFixed(2)):0;
+  const dispBal=cur==='USDT'?`${balUSDT.toFixed(2)} USDT`:`${balLYD.toLocaleString('ar-LY')} د.ل`;
+  const dispPrice=cur==='USDT'?`${(s.price/usdtRate).toFixed(2)} USDT`:`${s.price.toLocaleString('ar-LY')} د.ل`;
 
   const ic=document.getElementById('oIc');
   if(s.image){ic.innerHTML=`<img src="${s.image}" style="width:65px;height:65px;object-fit:cover;border-radius:11px;">`;}
@@ -1126,8 +1127,7 @@ window.openOrder = fid => {
   document.getElementById('oQty').value='1';
   document.getElementById('oNote').value='';
 
-  // إظهار الحقول حسب الخدمة
-  const needPhonePass = s.needPhone || s.needPass;
+  const needPhonePass=s.needPhone||s.needPass;
   const hasFields=s.needImei||s.needSn||s.needUsername||s.needEmail||needPhonePass;
   document.getElementById('oFieldsBox').style.display=hasFields?'block':'none';
   const showF=(id,show)=>{const b=document.getElementById(id);if(b)b.style.display=show?'block':'none';};
@@ -1145,6 +1145,7 @@ window.openOrder = fid => {
   document.getElementById('orderMo').classList.add('open');
   updateOrderTotal();
 };
+
 
 window.updateOrderTotal = () => {
   const s=currentSvc; if(!s) return;
