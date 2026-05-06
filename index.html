@@ -880,8 +880,17 @@ let activeCat='', pinInput='', adminUnlocked=false;
 const hide = id => document.getElementById(id).style.display='none';
 const show = (id,d='flex') => document.getElementById(id).style.display=d;
 
-function showLoad(){ show('loadingScreen'); }
-function hideLoad(){ hide('loadingScreen'); }
+function showLoad(){ 
+  show('loadingScreen'); 
+  window._loadTimeout=setTimeout(()=>{
+    hideLoad();
+    showLogin();
+  }, 10000);
+}
+function hideLoad(){ 
+  clearTimeout(window._loadTimeout);
+  hide('loadingScreen'); 
+}
 function showLogin(){ hideLoad(); hide('registerScreen'); hide('pendingScreen'); hide('mainApp'); show('loginScreen'); }
 function showRegister(){ hide('loginScreen'); show('registerScreen'); }
 window.showLogin = showLogin;
