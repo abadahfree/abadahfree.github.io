@@ -982,11 +982,24 @@ function renderFiles(){
   }).join('');
 }
 
+window.toggleFreeFiles=async fid=>{
+  const c=clients.find(x=>x.fid===fid);
+  if(!c) return;
+  const newVal=!c.freeFiles;
+  await updateDoc(doc(db,'clients',fid),{freeFiles:newVal});
+  alert(newVal?`✅ تم تفعيل ملفات مجانية لـ ${c.name}`:`❌ تم إلغاء ملفات مجانية لـ ${c.name}`);
+};
+
 window.buyFile=async fid=>{
   const f=files.find(x=>x.fid===fid);
   if(!f) return;
   const me=clients.find(c=>c.fid===currentUser?.fid);
   if(!me){alert('يرجى تسجيل الدخول');return;}
+  // تحقق من ملفات مجانية
+  if(me.freeFiles){
+    window.open(f.url,'_blank');
+    return;
+  }
   const cur=me.currency||'LYD';
   const price=f.price||0;
   const bal=cur==='USDT'?(me.balanceUSDT||0):(me.balance||0);
@@ -1828,6 +1841,7 @@ function renderClients(){
       </div>
       <div class="ali-ac">
         <button class="ib" onclick="openCharge('${c.fid}')" style="color:var(--gold);border-color:rgba(245,200,66,0.3);">💰</button>
+        <button class="ib" onclick="toggleFreeFiles('${c.fid}')" style="color:${c.freeFiles?'var(--green)':'var(--muted)'};border-color:${c.freeFiles?'rgba(0,230,118,0.3)':'rgba(255,255,255,0.1)'}" title="${c.freeFiles?'ملفات مجانية مفعّلة':'تفعيل ملفات مجانية'}">🎁</button>
         <button class="ib del" onclick="delClient('${c.fid}')">🗑</button>
       </div>
     </div>`).join('');
