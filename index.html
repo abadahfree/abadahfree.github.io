@@ -20,7 +20,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 @keyframes slideIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
 @keyframes modalIn{from{opacity:0;transform:scale(0.85) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
-#loadingScreen{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
+#loadingScreen{position:fixed;inset:0;background:var(--bg);z-index:999;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
 .spinner{width:48px;height:48px;border:3px solid var(--border);border-top-color:var(--cyan);border-radius:50%;animation:spin 0.8s linear infinite;}
 .screen{position:fixed;inset:0;background:var(--bg);z-index:990;display:flex;align-items:center;justify-content:center;padding:16px;}
 .auth-box{background:var(--surface);border:1px solid rgba(0,212,255,0.2);border-radius:24px;padding:36px 28px;max-width:400px;width:100%;text-align:center;box-shadow:0 40px 80px rgba(0,0,0,0.5);}
