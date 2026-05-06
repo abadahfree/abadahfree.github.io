@@ -540,6 +540,9 @@ textarea{resize:vertical;min-height:60px;}
           <label class="field-toggle"><input type="checkbox" id="fEmail"> 📧 Email</label>
           <label class="field-toggle"><input type="checkbox" id="fPhone"> 📞 رقم الهاتف</label>
           <label class="field-toggle"><input type="checkbox" id="fPass"> 🔑 كلمة السر</label>
+          <label class="field-toggle"><input type="checkbox" id="fLookscreen"> 🖥️ Look Screen</label>
+          <label class="field-toggle"><input type="checkbox" id="fAnydesk"> 🖱️ AnyDesk</label>
+          <label class="field-toggle"><input type="checkbox" id="fUltraviewer"> 👁️ UltraViewer</label>
         </div>
       </div>
 
@@ -685,6 +688,9 @@ textarea{resize:vertical;min-height:60px;}
         <div id="oEmailBox" class="fg" style="margin-bottom:8px;display:none;"><label>📧 البريد الإلكتروني *</label><input type="email" id="oEmail" placeholder="example@email.com"></div>
         <div id="oPhoneBox" class="fg" style="margin-bottom:8px;display:none;"><label>📞 رقم الهاتف *</label><input type="tel" id="oPhone" placeholder="09XXXXXXXX"></div>
         <div id="oPassBox" class="fg" style="display:none;"><label>🔑 كلمة السر *</label><input type="text" id="oPass" placeholder="أدخل كلمة السر"></div>
+        <div id="oLookscreenBox" class="fg" style="margin-bottom:8px;display:none;"><label>🖥️ Look Screen ID *</label><input type="text" id="oLookscreen" placeholder="أدخل Look Screen ID"></div>
+        <div id="oAnyDeskBox" class="fg" style="margin-bottom:8px;display:none;"><label>🖱️ AnyDesk ID *</label><input type="text" id="oAnyDesk" placeholder="أدخل AnyDesk ID"></div>
+        <div id="oUltraViewerBox" class="fg" style="display:none;"><label>👁️ UltraViewer ID *</label><input type="text" id="oUltraViewer" placeholder="أدخل UltraViewer ID"></div>
       </div>
 
       <div class="fg" style="margin-bottom:13px;"><label>📝 ملاحظة (اختياري)</label><input type="text" id="oNote" placeholder="أي تفاصيل إضافية..."></div>
@@ -763,6 +769,9 @@ textarea{resize:vertical;min-height:60px;}
         <label class="field-toggle"><input type="checkbox" id="efEmail"> 📧 Email</label>
         <label class="field-toggle"><input type="checkbox" id="efPhone"> 📞 الهاتف</label>
         <label class="field-toggle"><input type="checkbox" id="efPass"> 🔑 كلمة السر</label>
+        <label class="field-toggle"><input type="checkbox" id="efLookscreen"> 🖥️ Look Screen</label>
+        <label class="field-toggle"><input type="checkbox" id="efAnydesk"> 🖱️ AnyDesk</label>
+        <label class="field-toggle"><input type="checkbox" id="efUltraviewer"> 👁️ UltraViewer</label>
       </div>
     </div>
     <button onclick="saveEditSvc()" class="btn-p" style="width:100%;margin-top:0;">💾 حفظ التعديلات</button>
@@ -1128,7 +1137,7 @@ window.openOrder = fid => {
   document.getElementById('oNote').value='';
 
   const needPhonePass=s.needPhone||s.needPass;
-  const hasFields=s.needImei||s.needSn||s.needUsername||s.needEmail||needPhonePass;
+  const hasFields=s.needImei||s.needSn||s.needUsername||s.needEmail||needPhonePass||s.needLookscreen||s.needAnydesk||s.needUltraviewer;
   document.getElementById('oFieldsBox').style.display=hasFields?'block':'none';
   const showF=(id,show)=>{const b=document.getElementById(id);if(b)b.style.display=show?'block':'none';};
   showF('oImeiBox',s.needImei); if(document.getElementById('oImei'))document.getElementById('oImei').value='';
@@ -1137,6 +1146,9 @@ window.openOrder = fid => {
   showF('oEmailBox',s.needEmail); if(document.getElementById('oEmail'))document.getElementById('oEmail').value='';
   showF('oPhoneBox',s.needPhone); if(document.getElementById('oPhone'))document.getElementById('oPhone').value='';
   showF('oPassBox',s.needPass); if(document.getElementById('oPass'))document.getElementById('oPass').value='';
+  showF('oLookscreenBox',s.needLookscreen); if(document.getElementById('oLookscreen'))document.getElementById('oLookscreen').value='';
+  showF('oAnyDeskBox',s.needAnydesk); if(document.getElementById('oAnyDesk'))document.getElementById('oAnyDesk').value='';
+  showF('oUltraViewerBox',s.needUltraviewer); if(document.getElementById('oUltraViewer'))document.getElementById('oUltraViewer').value='';
 
   document.getElementById('oS1').style.display='block';
   document.getElementById('oS2').style.display='none';
@@ -1189,12 +1201,18 @@ window.confirmOrder = async () => {
   const email=document.getElementById('oEmail')?.value.trim()||'';
   const phone=document.getElementById('oPhone')?.value.trim()||'';
   const pass=document.getElementById('oPass')?.value.trim()||'';
+  const lookscreen=document.getElementById('oLookscreen')?.value.trim()||'';
+  const anydesk=document.getElementById('oAnyDesk')?.value.trim()||'';
+  const ultraviewer=document.getElementById('oUltraViewer')?.value.trim()||'';
   if(needImei&&!imei){alert('⚠️ يرجى إدخال IMEI الجهاز');return;}
   if(needSn&&!sn){alert('⚠️ يرجى إدخال Serial Number');return;}
   if(needUsername&&!username){alert('⚠️ يرجى إدخال Username');return;}
   if(needEmail&&!email){alert('⚠️ يرجى إدخال البريد الإلكتروني');return;}
   if(needPhonePass&&!phone){alert('⚠️ يرجى إدخال رقم الهاتف');return;}
   if(needPhonePass&&!pass){alert('⚠️ يرجى إدخال كلمة السر');return;}
+  if(s.needLookscreen&&!lookscreen){alert('⚠️ يرجى إدخال Look Screen ID');return;}
+  if(s.needAnydesk&&!anydesk){alert('⚠️ يرجى إدخال AnyDesk ID');return;}
+  if(s.needUltraviewer&&!ultraviewer){alert('⚠️ يرجى إدخال UltraViewer ID');return;}
 
   const btn=document.getElementById('oConfBtn');
   btn.disabled=true; btn.textContent='جاري الإرسال...';
@@ -1217,6 +1235,7 @@ window.confirmOrder = async () => {
       note:note||'', imei:imei||'', sn:sn||'',
       username:username||'', email:email||'',
       phone:phone||'', password:pass||'',
+      lookscreen:lookscreen||'', anydesk:anydesk||'', ultraviewer:ultraviewer||'',
       status:'pending', createdAt:t
     });
 
@@ -1237,7 +1256,7 @@ window.confirmOrder = async () => {
 👤 *الزبون:* ${currentUser.name}
 📧 *الإيميل:* ${currentUser.email}
 📞 *الهاتف:* ${currentUser.phone||'—'}
-${imei?'📱 *IMEI:* '+imei+'\n':''}${sn?'🔢 *SN:* '+sn+'\n':''}${username?'👤 *Username:* '+username+'\n':''}${email?'📧 *Email:* '+email+'\n':''}${phone?'📞 *الهاتف:* '+phone+'\n':''}${pass?'🔑 *كلمة السر:* '+pass+'\n':''}${note?'📝 *ملاحظة:* '+note+'\n':''}💳 *الرصيد المتبقي:* ${dispAfter}
+${imei?'📱 *IMEI:* '+imei+'\n':''}${sn?'🔢 *SN:* '+sn+'\n':''}${username?'👤 *Username:* '+username+'\n':''}${email?'📧 *Email:* '+email+'\n':''}${phone?'📞 *الهاتف:* '+phone+'\n':''}${pass?'🔑 *كلمة السر:* '+pass+'\n':''}${lookscreen?'🖥️ *Look Screen:* '+lookscreen+'\n':''}${anydesk?'🖱️ *AnyDesk:* '+anydesk+'\n':''}${ultraviewer?'👁️ *UltraViewer:* '+ultraviewer+'\n':''}${note?'📝 *ملاحظة:* '+note+'\n':''}💳 *الرصيد المتبقي:* ${dispAfter}
 🕐 *الوقت:* ${ts}
 ⏳ بانتظار موافقتك`;
     await sendTelegram(tgMsg);
@@ -1410,11 +1429,14 @@ window.addService=async()=>{
     needEmail:document.getElementById('fEmail').checked,
     needPhone:document.getElementById('fPhone').checked,
     needPass:document.getElementById('fPass').checked,
+    needLookscreen:document.getElementById('fLookscreen').checked,
+    needAnydesk:document.getElementById('fAnydesk').checked,
+    needUltraviewer:document.getElementById('fUltraviewer').checked,
     image:imgSrc&&imgSrc.startsWith('data:')?imgSrc:null,
     active:true, createdAt:Date.now()
   });
   ['aName','aPrice','aDesc'].forEach(id=>document.getElementById(id).value='');
-  ['fImei','fSn','fUsername','fEmail','fPhone','fPass'].forEach(id=>document.getElementById(id).checked=false);
+  ['fImei','fSn','fUsername','fEmail','fPhone','fPass','fLookscreen','fAnydesk','fUltraviewer'].forEach(id=>document.getElementById(id).checked=false);
   clearImg();
 };
 window.toggleSvc=async fid=>{const s=services.find(x=>x.fid===fid);if(s)await updateDoc(doc(db,'services',fid),{active:!s.active});};
@@ -1434,6 +1456,9 @@ window.openEditSvc=fid=>{
   document.getElementById('efEmail').checked=!!s.needEmail;
   document.getElementById('efPhone').checked=!!s.needPhone;
   document.getElementById('efPass').checked=!!s.needPass;
+  document.getElementById('efLookscreen').checked=!!s.needLookscreen;
+  document.getElementById('efAnydesk').checked=!!s.needAnydesk;
+  document.getElementById('efUltraviewer').checked=!!s.needUltraviewer;
   document.getElementById('editSvcMo').classList.add('open');
 };
 
@@ -1452,6 +1477,9 @@ window.saveEditSvc=async()=>{
     needEmail:document.getElementById('efEmail').checked,
     needPhone:document.getElementById('efPhone').checked,
     needPass:document.getElementById('efPass').checked,
+    needLookscreen:document.getElementById('efLookscreen').checked,
+    needAnydesk:document.getElementById('efAnydesk').checked,
+    needUltraviewer:document.getElementById('efUltraviewer').checked,
   });
   document.getElementById('editSvcMo').classList.remove('open');
 };
