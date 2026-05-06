@@ -284,6 +284,7 @@ textarea{resize:vertical;min-height:60px;}
     <button class="tab" onclick="switchTab('payment')">💳 الدفع</button>
     <button class="tab" id="dashTab" onclick="switchTab('dashboard')" style="display:none;">📊 لوحة المعلومات</button>
     <button class="tab" id="clientsTab" onclick="switchTab('clients')" style="display:none;">👥 الزبائن</button>
+    <button class="tab" id="filesTab" onclick="switchTab('files')" style="display:none;">⚠️ ملفات إصلاح</button>
     <button class="tab" id="adminTab" onclick="askPin()" style="display:none;">⚙️ الإدارة</button>
   </div>
 
@@ -295,7 +296,7 @@ textarea{resize:vertical;min-height:60px;}
       <div id="adsTrack" style="display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding-bottom:4px;"></div>
     </div>
 
-    <div class="sw" style="margin-bottom:13px;"><span class="si">🔍</span><input type="text" id="searchSvc" placeholder="ابحث عن خدمة..." oninput="activeCat='';document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));document.querySelector('.cat-btn').classList.add('active');renderServices()"></div>
+    <div class="sw" style="margin-bottom:13px;"><span class="si">🔍</span><input type="text" id="searchSvc" placeholder="ابحث عن خدمة..." oninput="clearTimeout(window._st);window._st=setTimeout(()=>{activeCat='';document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));const fb=document.querySelector('.cat-btn');if(fb)fb.classList.add('active');renderServices();},200)"></div>
     <div class="cat-scroll">
       <button class="cat-btn active" onclick="setCategory(this,'')">🔓 الكل</button>
       <button class="cat-btn" onclick="setCategory(this,'إيجار أدوات')">🔧 إيجار أدوات</button>
@@ -450,10 +451,29 @@ textarea{resize:vertical;min-height:60px;}
     <div id="clientsTabList"></div>
   </div>
 
+  <!-- FILES PANEL -->
+  <div class="panel" id="panel-files">
+    <div class="sec-title" style="margin-bottom:13px;">⚠️ ملفات إصلاح</div>
+    <div class="sw" style="margin-bottom:13px;">
+      <span class="si">🔍</span>
+      <input type="text" id="searchFiles" placeholder="ابحث عن ملف..." oninput="renderFiles()">
+    </div>
+    <div id="filesList"></div>
+  </div>
+
   <!-- ADMIN -->
   <div class="panel" id="panel-admin">
 
-    <!-- إدارة الدعايات -->
+    <!-- إدارة ملفات الإصلاح -->
+    <div class="adm-form" style="margin-bottom:14px;">
+      <div class="sec-title">⚠️ إدارة ملفات الإصلاح</div>
+      <div style="font-size:0.78rem;color:var(--muted);margin-bottom:11px;">أضف ملفات إصلاح تظهر للزبائن</div>
+      <div class="fg" style="margin-bottom:9px;"><label>📋 اسم الملف</label><input type="text" id="fileName" placeholder="مثال: Samsung A15 FRP Fix"></div>
+      <div class="fg" style="margin-bottom:9px;"><label>🔗 رابط التحميل</label><input type="text" id="fileUrl" placeholder="https://..."></div>
+      <div class="fg" style="margin-bottom:9px;"><label>📱 الجهاز / الموديل</label><input type="text" id="fileDevice" placeholder="مثال: Samsung A15"></div>
+      <div class="fg" style="margin-bottom:9px;"><label>📝 ملاحظة (اختياري)</label><input type="text" id="fileNote" placeholder="تفاصيل إضافية..."></div>
+      <button onclick="addFile()" class="btn-p" style="width:100%;margin-top:0;">➕ إضافة ملف</button>
+    </div>
     <div class="adm-form" style="margin-bottom:14px;">
       <div class="sec-title">🖼️ إدارة الدعايات</div>
       <div style="font-size:0.78rem;color:var(--muted);margin-bottom:11px;">أضف صور دعايات تظهر للزبائن في الصفحة الرئيسية</div>
@@ -798,7 +818,8 @@ const cliCol = collection(db, 'clients');
 const ordCol = collection(db, 'orders');
 const regCol = collection(db, 'registrations');
 const adsCol = collection(db, 'ads');
-let ads = [];
+const filesCol = collection(db, 'files');
+let ads = [], files = [];
 
 const ADMIN_HASH = '5310bdd51ae8fdbd5f6be4fceb8cff80df3a658ac3e129997d96e78180367dd2';
 
@@ -859,6 +880,7 @@ function showApp(){
   document.getElementById('adminTab').style.display = isAdmin ? 'flex' : 'none';
   document.getElementById('dashTab').style.display = isAdmin ? 'flex' : 'none';
   document.getElementById('clientsTab').style.display = isAdmin ? 'flex' : 'none';
+  document.getElementById('filesTab').style.display = 'flex';
   updateUserBar();
   loadRealtime();
   loadUsdtRate();
@@ -901,7 +923,48 @@ function loadRealtime(){
     renderAdsSlider();
     renderAdsList();
   });
+  onSnapshot(query(filesCol, orderBy('createdAt','desc')), snap=>{
+    files=snap.docs.map(d=>({...d.data(),fid:d.id}));
+    renderFiles();
+  });
 }
+
+function renderFiles(){
+  const el=document.getElementById('filesList');
+  if(!el) return;
+  const q=(document.getElementById('searchFiles')?.value||'').toLowerCase();
+  let list=q?files.filter(f=>(f.name||'').toLowerCase().includes(q)||(f.device||'').toLowerCase().includes(q)):files;
+  if(!list.length){el.innerHTML=`<div class="empty"><div class="ei">📁</div><h3>${q?'لا نتائج':'لا توجد ملفات بعد'}</h3></div>`;return;}
+  el.innerHTML=list.map((f,i)=>`
+    <div class="ali" style="animation-delay:${i*0.03}s">
+      <div class="ali-ic" style="background:rgba(255,170,0,0.1);font-size:1.3rem;">⚠️</div>
+      <div class="ali-b">
+        <div class="ali-n">${f.name}</div>
+        <div style="font-size:0.78rem;color:var(--cyan);margin-bottom:3px;">📱 ${f.device||'—'}</div>
+        ${f.note?`<div style="font-size:0.74rem;color:var(--muted);">📝 ${f.note}</div>`:''}
+      </div>
+      <div class="ali-ac" style="display:flex;flex-direction:column;gap:5px;">
+        <a href="${f.url}" target="_blank" style="padding:7px 12px;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);border-radius:8px;color:var(--cyan);font-size:0.76rem;text-decoration:none;text-align:center;">⬇️ تحميل</a>
+        ${currentUser?.isAdmin?`<button class="ib del" onclick="delFile('${f.fid}')">🗑</button>`:''}
+      </div>
+    </div>`).join('');
+}
+
+window.addFile=async()=>{
+  const name=document.getElementById('fileName').value.trim();
+  const url=document.getElementById('fileUrl').value.trim();
+  const device=document.getElementById('fileDevice').value.trim();
+  const note=document.getElementById('fileNote').value.trim();
+  if(!name||!url){alert('يرجى إدخال الاسم والرابط');return;}
+  await addDoc(filesCol,{name,url,device,note,createdAt:Date.now()});
+  ['fileName','fileUrl','fileDevice','fileNote'].forEach(id=>document.getElementById(id).value='');
+  alert('✅ تم إضافة الملف');
+};
+
+window.delFile=async fid=>{
+  if(!confirm('حذف هذا الملف؟')) return;
+  await deleteDoc(doc(db,'files',fid));
+};
 
 function renderAdsSlider(){
   const track=document.getElementById('adsTrack');
@@ -1066,7 +1129,7 @@ function updateStats(){
 
 // ===== TABS =====
 window.switchTab = t => {
-  const tabs=currentUser?.isAdmin?['services','account','payment','dashboard','clients','admin']:['services','account','payment'];
+  const tabs=currentUser?.isAdmin?['services','account','payment','dashboard','clients','files','admin']:['services','account','payment','files'];
   document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',tabs[i]===t));
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   const p=document.getElementById('panel-'+t);
@@ -1074,6 +1137,7 @@ window.switchTab = t => {
   if(t==='account'){updateUserBar();renderMyOrders();}
   if(t==='dashboard'){setTimeout(()=>updateDashboard(),100);}
   if(t==='clients'){renderClientsTab();}
+  if(t==='files'){renderFiles();}
   if(t==='admin'){loadTgConfig();loadUsdtRate();renderAdmin();renderClients();renderAllOrders();renderPending();}
 };
 
