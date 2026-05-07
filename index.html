@@ -2230,7 +2230,8 @@ function renderClients(){
         </div>
       </div>
       <div class="ali-ac">
-        <button class="ib" onclick="openCharge('${c.fid}')" style="color:var(--gold);border-color:rgba(245,200,66,0.3);">💰</button>
+        <button class="ib" onclick="openCharge('${c.fid}')" style="color:var(--gold);border-color:rgba(245,200,66,0.3);" title="شحن رصيد">💰</button>
+        <button class="ib" onclick="openDeduct('${c.fid}')" style="color:var(--red);border-color:rgba(255,68,68,0.3);" title="خصم رصيد">➖</button>
         <button class="ib" onclick="toggleFreeFiles('${c.fid}')" style="color:${c.freeFiles?'var(--green)':'var(--muted)'};border-color:${c.freeFiles?'rgba(0,230,118,0.3)':'rgba(255,255,255,0.1)'}" title="${c.freeFiles?'ملفات مجانية مفعّلة':'تفعيل ملفات مجانية'}">🎁</button>
         <button class="ib" onclick="toggleBan('${c.fid}')" style="color:${c.banned?'var(--red)':'var(--muted)'};border-color:${c.banned?'rgba(255,68,68,0.3)':'rgba(255,255,255,0.1)'}" title="${c.banned?'محظور — اضغط لرفع الحظر':'حظر الزبون'}">🚫</button>
         <button class="ib del" onclick="delClient('${c.fid}')">🗑</button>
@@ -2257,7 +2258,8 @@ function renderClientsTab(){
         ${c.status==='pending'?`<div style="display:flex;gap:5px;margin-top:7px;"><button onclick="approveClient('${c.fid}')" style="flex:1;padding:6px;background:rgba(0,230,118,0.1);border:1px solid rgba(0,230,118,0.3);border-radius:7px;color:var(--green);font-size:0.76rem;cursor:pointer;font-family:'Tajawal',sans-serif;">✅ موافقة</button><button onclick="rejectClient('${c.fid}')" style="flex:1;padding:6px;background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.3);border-radius:7px;color:var(--red);font-size:0.76rem;cursor:pointer;font-family:'Tajawal',sans-serif;">❌ رفض</button></div>`:''}
       </div>
       <div class="ali-ac">
-        <button class="ib" onclick="openCharge('${c.fid}')" style="color:var(--gold);border-color:rgba(245,200,66,0.3);">💰</button>
+        <button class="ib" onclick="openCharge('${c.fid}')" style="color:var(--gold);border-color:rgba(245,200,66,0.3);" title="شحن رصيد">💰</button>
+        <button class="ib" onclick="openDeduct('${c.fid}')" style="color:var(--red);border-color:rgba(255,68,68,0.3);" title="خصم رصيد">➖</button>
         <button class="ib" onclick="toggleFreeFiles('${c.fid}')" style="color:${c.freeFiles?'var(--green)':'var(--muted)'};border-color:${c.freeFiles?'rgba(0,230,118,0.3)':'rgba(255,255,255,0.1)'}" title="${c.freeFiles?'ملفات مجانية مفعّلة':'تفعيل ملفات مجانية'}">🎁</button>
         <button class="ib" onclick="toggleBan('${c.fid}')" style="color:${c.banned?'var(--red)':'var(--muted)'};border-color:${c.banned?'rgba(255,68,68,0.3)':'rgba(255,255,255,0.1)'}" title="${c.banned?'محظور — اضغط لرفع الحظر':'حظر الزبون'}">🚫</button>
         <button class="ib del" onclick="delClient('${c.fid}')">🗑</button>
@@ -2276,6 +2278,43 @@ window.addClient=async()=>{
   document.getElementById('cName').value='';document.getElementById('cPhone').value='';document.getElementById('cEmail').value='';document.getElementById('cPass').value='';document.getElementById('cBal').value='0';
 };
 window.delClient=async fid=>{if(confirm('حذف هذا الزبون؟'))await deleteDoc(doc(db,'clients',fid));};
+
+window.openDeduct=fid=>{
+  currentChgClient=clients.find(c=>c.fid===fid);
+  if(!currentChgClient) return;
+  document.getElementById('deductName').textContent=`👤 ${currentChgClient.name} — ${currentChgClient.email||''}`;
+  document.getElementById('deductCurr').innerHTML=`${(currentChgClient.balance||0).toLocaleString('ar-LY')} <small style="font-family:'Tajawal',sans-serif;font-size:0.78rem;color:var(--muted);">د.ل</small>`;
+  document.getElementById('deductAmt').value='';
+  document.getElementById('deductReason').value='';
+  document.getElementById('deductMo').classList.add('open');
+};
+
+window.confirmDeduct=async()=>{
+  const amt=parseFloat(document.getElementById('deductAmt').value);
+  const reason=document.getElementById('deductReason').value.trim()||'خصم يدوي';
+  if(!amt||amt<=0){alert('يرجى إدخال مبلغ صحيح');return;}
+  const oldBal=currentChgClient.balance||0;
+  if(amt>oldBal){alert(`⚠️ الرصيد الحالي (${oldBal} د.ل) أقل من المبلغ المراد خصمه!`);return;}
+  const newBal=parseFloat((oldBal-amt).toFixed(2));
+  const newBalUSDT=parseFloat((newBal/usdtRate).toFixed(4));
+
+  await updateDoc(doc(db,'clients',currentChgClient.fid),{balance:newBal,balanceUSDT:newBalUSDT});
+
+  await addDoc(ordCol,{
+    clientFid:currentChgClient.fid,
+    clientName:currentChgClient.name,
+    clientEmail:currentChgClient.email||'',
+    serviceName:`➖ خصم يدوي - ${reason}`,
+    serviceFid:'deduct',
+    price:amt, total:amt, totalUSDT:0, qty:1,
+    balanceBefore:oldBal, balanceAfter:newBal,
+    type:'deduct', status:'completed',
+    note:reason, createdAt:Date.now()
+  });
+
+  document.getElementById('deductMo').classList.remove('open');
+  alert(`✅ تم خصم ${amt} د.ل من ${currentChgClient.name}\nالرصيد الجديد: ${newBal} د.ل`);
+};
 
 window.openCharge=fid=>{
   currentChgClient=clients.find(c=>c.fid===fid);
@@ -2388,6 +2427,29 @@ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;if(!lo
 window.installApp=()=>{if(dp){dp.prompt();dp.userChoice.then(()=>{dp=null;document.getElementById('installBanner').classList.remove('show');});}else alert('افتح القائمة (⋮) واختر "إضافة إلى الشاشة الرئيسية"');};
 window.dismissBanner=()=>{document.getElementById('installBanner').classList.remove('show');localStorage.setItem('pwa_dismissed','1');};
 </script>
+<!-- DEDUCT MODAL -->
+<div class="mo" id="deductMo" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="md" style="max-width:340px;text-align:center;">
+    <button class="mc" onclick="document.getElementById('deductMo').classList.remove('open')">✕</button>
+    <div style="font-size:2rem;margin-bottom:9px;">➖</div>
+    <div style="font-size:1.05rem;font-weight:700;margin-bottom:4px;">خصم رصيد</div>
+    <div id="deductName" style="color:var(--red);font-size:0.85rem;margin-bottom:16px;">—</div>
+    <div style="background:rgba(255,68,68,0.08);border:1px solid rgba(255,68,68,0.2);border-radius:11px;padding:13px;margin-bottom:14px;">
+      <div style="font-size:0.76rem;color:var(--muted);margin-bottom:4px;">الرصيد الحالي</div>
+      <div id="deductCurr" style="font-family:'Orbitron',sans-serif;font-size:1.7rem;font-weight:700;color:var(--gold);">0 <small style="font-family:'Tajawal',sans-serif;font-size:0.78rem;color:var(--muted);">د.ل</small></div>
+    </div>
+    <div class="fg" style="margin-bottom:9px;text-align:right;">
+      <label>المبلغ المراد خصمه (د.ل)</label>
+      <input type="number" id="deductAmt" placeholder="مثال: 50" min="1" style="text-align:center;font-size:1.05rem;">
+    </div>
+    <div class="fg" style="margin-bottom:14px;text-align:right;">
+      <label>سبب الخصم</label>
+      <input type="text" id="deductReason" placeholder="مثال: تعديل يدوي">
+    </div>
+    <button onclick="confirmDeduct()" style="width:100%;padding:12px;background:linear-gradient(135deg,var(--red),#cc0000);border:none;border-radius:11px;color:#fff;font-family:'Tajawal',sans-serif;font-size:0.92rem;font-weight:700;cursor:pointer;">➖ تأكيد الخصم</button>
+  </div>
+</div>
+
 <!-- RESULT MODAL -->
 <div class="mo" id="resultMo" onclick="if(event.target===this)this.classList.remove('open')">
   <div class="md" style="max-width:380px;">
