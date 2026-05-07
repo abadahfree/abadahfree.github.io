@@ -292,6 +292,7 @@ textarea{resize:vertical;min-height:60px;}
     <button class="tab" id="dashTab" onclick="switchTab('dashboard')" style="display:none;">📊 لوحة المعلومات</button>
     <button class="tab" id="clientsTab" onclick="switchTab('clients')" style="display:none;">👥 الزبائن</button>
     <button class="tab" id="chargesTab" onclick="switchTab('charges')" style="display:none;">💳 سجل الشحن</button>
+    <button class="tab" id="ordersTab" onclick="switchTab('orders')" style="display:none;">📋 سجل الطلبات</button>
     <button class="tab" id="filesTab" onclick="switchTab('files')" style="display:none;">⚠️ ملفات إصلاح</button>
     <button class="tab" id="adminTab" onclick="askPin()" style="display:none;">⚙️ الإدارة</button>
   </div>
@@ -606,54 +607,29 @@ textarea{resize:vertical;min-height:60px;}
     <div class="sec-title" style="margin-bottom:11px;">📋 الخدمات</div>
     <div id="adminList"></div>
 
-    <!-- الزبائن -->
-    <div style="margin-top:26px;">
-      <div class="adm-form">
-        <div class="sec-title">👥 إضافة زبون يدوياً</div>
-        <div class="form-grid">
-          <div class="fg"><label>الاسم *</label><input type="text" id="cName" placeholder="اسم الزبون"></div>
-          <div class="fg"><label>الهاتف *</label><input type="tel" id="cPhone" placeholder="0915..."></div>
-        </div>
-        <div class="form-grid">
-          <div class="fg"><label>الإيميل *</label><input type="email" id="cEmail" placeholder="ex@email.com"></div>
-          <div class="fg"><label>كلمة السر *</label><input type="text" id="cPass" placeholder="كلمة سر"></div>
-        </div>
-        <div class="fg" style="margin-bottom:9px;"><label>الرصيد الابتدائي (د.ل)</label><input type="number" id="cBal" placeholder="0" min="0" value="0"></div>
-        <button class="btn-p" onclick="addClient()">➕ إضافة زبون</button>
-      </div>
-      <div class="sec-title" style="margin-bottom:11px;">👥 الزبائن</div>
-      <div id="clientsList"></div>
-    </div>
+  </div>
 
-    <!-- سجل كل الطلبات -->
-    <div style="margin-top:26px;">
-      <div class="sec-title" style="margin-bottom:11px;">📊 سجل جميع الطلبات</div>
-      <!-- فلاتر الطلبات -->
-      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:13px;">
-        <div class="sw" style="flex:1;min-width:180px;"><span class="si">🔍</span><input type="text" id="searchOrds" placeholder="ابحث باسم الزبون أو الخدمة..." oninput="renderAllOrders()"></div>
-        <select id="filterOrdStatus" onchange="renderAllOrders()" style="padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Tajawal',sans-serif;font-size:0.84rem;">
-          <option value="">📋 كل الحالات</option>
-          <option value="pending">⏳ قيد المراجعة</option>
-          <option value="processing">🔄 قيد المعالجة</option>
-          <option value="completed">✅ مكتمل</option>
-          <option value="rejected">❌ مرفوض</option>
-        </select>
-        <select id="filterOrdDate" onchange="renderAllOrders()" style="padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Tajawal',sans-serif;font-size:0.84rem;">
-          <option value="">📅 كل الأوقات</option>
-          <option value="today">اليوم</option>
-          <option value="week">هذا الأسبوع</option>
-          <option value="month">هذا الشهر</option>
-        </select>
-      </div>
-      <div id="ordersCount" style="font-size:0.76rem;color:var(--muted);margin-bottom:10px;"></div>
-      <div id="allOrders"></div>
+  <!-- ORDERS TAB PANEL -->
+  <div class="panel" id="panel-orders">
+    <div style="font-size:0.8rem;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">📋 سجل جميع الطلبات</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:13px;">
+      <div class="sw" style="flex:1;min-width:160px;"><span class="si">🔍</span><input type="text" id="searchOrdsTab" placeholder="ابحث..." oninput="renderAllOrdersTab()"></div>
+      <select id="filterOrdStatusTab" onchange="renderAllOrdersTab()" style="padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Tajawal',sans-serif;font-size:0.84rem;">
+        <option value="">📋 كل الحالات</option>
+        <option value="pending">⏳ انتظار</option>
+        <option value="processing">🔄 معالجة</option>
+        <option value="completed">✅ مكتمل</option>
+        <option value="rejected">❌ مرفوض</option>
+      </select>
+      <select id="filterOrdDateTab" onchange="renderAllOrdersTab()" style="padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Tajawal',sans-serif;font-size:0.84rem;">
+        <option value="">📅 كل الأوقات</option>
+        <option value="today">اليوم</option>
+        <option value="week">الأسبوع</option>
+        <option value="month">الشهر</option>
+      </select>
     </div>
-
-    <!-- سجل الشحن -->
-    <div style="margin-top:26px;">
-      <div class="sec-title" style="margin-bottom:11px;">💳 سجل عمليات الشحن</div>
-      <div id="allCharges"></div>
-    </div>
+    <div id="ordersTabCount" style="font-size:0.76rem;color:var(--muted);margin-bottom:10px;"></div>
+    <div id="allOrdersTab"></div>
   </div>
 
   <!-- CHARGES PANEL -->
@@ -966,6 +942,7 @@ function showApp(){
   document.getElementById('dashTab').style.display = isAdmin ? 'flex' : 'none';
   document.getElementById('clientsTab').style.display = isAdmin ? 'flex' : 'none';
   document.getElementById('chargesTab').style.display = isAdmin ? 'flex' : 'none';
+  document.getElementById('ordersTab').style.display = isAdmin ? 'flex' : 'none';
   document.getElementById('filesTab').style.display = 'flex';
   document.getElementById('guestBtns').style.display = 'none';
   document.getElementById('logoutBtn').style.display = 'block';
@@ -1340,8 +1317,13 @@ function updateStats(){
 
 // ===== TABS =====
 window.switchTab = t => {
-  const tabs=currentUser?.isAdmin?['services','account','payment','dashboard','clients','files','admin']:['services','account','payment','files'];
-  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',tabs[i]===t));
+  // إصلاح: مطابقة التاب بالـ onclick مش بالـ index
+  document.querySelectorAll('.tab').forEach(b=>{
+    const oc=b.getAttribute('onclick')||'';
+    const match=oc.match(/switchTab\('([^']+)'\)/);
+    const tabName=match?match[1]:(oc.includes('askPin')?'admin':null);
+    b.classList.toggle('active', tabName===t);
+  });
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   const p=document.getElementById('panel-'+t);
   if(p) p.classList.add('active');
@@ -1349,8 +1331,9 @@ window.switchTab = t => {
   if(t==='dashboard'){setTimeout(()=>updateDashboard(),100);}
   if(t==='clients'){renderClientsTab();}
   if(t==='files'){renderFiles();}
-  if(t==='admin'){loadTgConfig();loadUsdtRate();loadSiteSettings();renderAdmin();renderClients();renderAllOrders();renderAllCharges();renderPending();}
+  if(t==='admin'){loadTgConfig();loadUsdtRate();loadSiteSettings();renderAdmin();renderPending();}
   if(t==='charges'){renderAllChargesTab();}
+  if(t==='orders'){renderAllOrdersTab();}
 };
 
 window.setCategory=(btn,cat)=>{
@@ -1653,6 +1636,57 @@ function renderMyOrders(){
         <div style="font-family:'Orbitron',sans-serif;font-size:0.85rem;color:var(--red);font-weight:700;flex-shrink:0;">-${o.price} د.ل</div>
       </div>
       ${resultBox}
+    </div>`;
+  }).join('');
+}
+
+function renderAllOrdersTab(){
+  const el=document.getElementById('allOrdersTab');
+  if(!el) return;
+  const q=(document.getElementById('searchOrdsTab')?.value||'').toLowerCase();
+  const st=document.getElementById('filterOrdStatusTab')?.value||'';
+  const dt=document.getElementById('filterOrdDateTab')?.value||'';
+  const startOfDay=new Date(); startOfDay.setHours(0,0,0,0);
+  const startOfWeek=new Date(); startOfWeek.setDate(startOfWeek.getDate()-startOfWeek.getDay()); startOfWeek.setHours(0,0,0,0);
+  const startOfMonth=new Date(); startOfMonth.setDate(1); startOfMonth.setHours(0,0,0,0);
+  let filtered=orders.filter(o=>{
+    if(q && !o.clientName?.toLowerCase().includes(q) && !o.serviceName?.toLowerCase().includes(q)) return false;
+    if(st && o.status!==st) return false;
+    if(dt==='today' && o.createdAt<startOfDay.getTime()) return false;
+    if(dt==='week' && o.createdAt<startOfWeek.getTime()) return false;
+    if(dt==='month' && o.createdAt<startOfMonth.getTime()) return false;
+    return true;
+  });
+  const countEl=document.getElementById('ordersTabCount');
+  if(countEl) countEl.textContent=`${filtered.length} طلب`;
+  if(!filtered.length){el.innerHTML='<div class="empty"><div class="ei">📋</div><h3>لا توجد طلبات</h3></div>';return;}
+  const stMap={pending:{ic:'⏳',txt:'قيد المراجعة',cls:'pending'},processing:{ic:'🔄',txt:'قيد المعالجة',cls:'processing'},completed:{ic:'✅',txt:'مكتمل',cls:'completed'},rejected:{ic:'❌',txt:'مرفوض',cls:'rejected'}};
+  el.innerHTML=filtered.slice(0,100).map((o,i)=>{
+    const st2=stMap[o.status]||stMap.pending;
+    const actionBtns=o.status!=='completed'&&o.status!=='rejected'?`
+      <div class="ord-act-btns">
+        ${o.status!=='processing'?`<button class="btn-process" onclick="setOrderStatus('${o.fid}','processing')">🔄 معالجة</button>`:''}
+        <button class="btn-approve" onclick="setOrderStatus('${o.fid}','completed')">✅ موافقة</button>
+        <button class="btn-reject" onclick="setOrderStatus('${o.fid}','rejected')">❌ رفض</button>
+      </div>`:`<div style="font-size:0.76rem;color:var(--muted);margin-top:6px;">الحالة النهائية: <strong style="color:${o.status==='completed'?'var(--green)':'var(--red)'}"> ${st2.txt}</strong></div>`;
+    return `<div class="ord-full ${st2.cls}" style="animation-delay:${i*0.02}s">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px;">
+        <div>
+          <div style="font-size:0.92rem;font-weight:700;margin-bottom:3px;">${st2.ic} ${o.serviceName}</div>
+          <div class="ali-m" style="margin-bottom:4px;">
+            <span class="chip" style="background:rgba(0,212,255,0.08);color:var(--cyan);border-color:rgba(0,212,255,0.15);">👤 ${o.clientName}</span>
+            <span class="chip cg">💰 ${o.price} د.ل</span>
+            <span class="chip cc">${new Date(o.createdAt).toLocaleDateString('ar-LY')}</span>
+          </div>
+          ${o.imei?`<div class="ord-detail-row">📱 IMEI: <span>${o.imei}</span></div>`:''}
+          ${o.sn?`<div class="ord-detail-row">🔢 SN: <span>${o.sn}</span></div>`:''}
+          ${o.username?`<div class="ord-detail-row">👤 Username: <span>${o.username}</span></div>`:''}
+          ${o.email?`<div class="ord-detail-row">📧 Email: <span>${o.email}</span></div>`:''}
+          ${o.note?`<div class="ord-detail-row">📝 ملاحظة: <span>${o.note}</span></div>`:''}
+        </div>
+        <div style="flex-shrink:0;font-family:'Orbitron',sans-serif;font-size:1.1rem;font-weight:700;color:var(--gold);">${o.price}<small style="font-family:'Tajawal',sans-serif;font-size:0.65rem;color:var(--muted);">د.ل</small></div>
+      </div>
+      ${actionBtns}
     </div>`;
   }).join('');
 }
