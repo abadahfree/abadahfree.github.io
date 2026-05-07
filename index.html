@@ -338,7 +338,7 @@ textarea{resize:vertical;min-height:60px;}
       </div>
     </div>
     <div class="acc-card">
-      <div style="font-size:0.8rem;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:1px;margin-bottom:13px;">📋 سجل طلباتي</div>
+      <div style="font-size:0.8rem;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:1px;margin-bottom:13px;" id="ordersTitle">📋 سجل طلباتي</div>
       <div id="myOrders"></div>
     </div>
     <div class="acc-card">
@@ -628,6 +628,12 @@ textarea{resize:vertical;min-height:60px;}
     <div style="margin-top:26px;">
       <div class="sec-title" style="margin-bottom:11px;">📊 سجل جميع الطلبات</div>
       <div id="allOrders"></div>
+    </div>
+
+    <!-- سجل الشحن -->
+    <div style="margin-top:26px;">
+      <div class="sec-title" style="margin-bottom:11px;">💳 سجل عمليات الشحن</div>
+      <div id="allCharges"></div>
     </div>
   </div>
 
@@ -1317,7 +1323,7 @@ window.switchTab = t => {
   if(t==='dashboard'){setTimeout(()=>updateDashboard(),100);}
   if(t==='clients'){renderClientsTab();}
   if(t==='files'){renderFiles();}
-  if(t==='admin'){loadTgConfig();loadUsdtRate();loadSiteSettings();renderAdmin();renderClients();renderAllOrders();renderPending();}
+  if(t==='admin'){loadTgConfig();loadUsdtRate();loadSiteSettings();renderAdmin();renderClients();renderAllOrders();renderAllCharges();renderPending();}
 };
 
 window.setCategory=(btn,cat)=>{
@@ -1595,7 +1601,10 @@ function renderMyTransactions(){
 function renderMyOrders(){
   const el=document.getElementById('myOrders');
   if(!el||!currentUser) return;
-  const mine=currentUser.isAdmin?orders.slice(0,20):orders.filter(o=>o.clientFid===currentUser.fid);
+  // تغيير العنوان حسب نوع المستخدم
+  const titleEl=document.getElementById('ordersTitle');
+  if(titleEl) titleEl.innerHTML=currentUser.isAdmin?'📋 سجل طلبات الزبائن':'📋 سجل طلباتي';
+  const mine=currentUser.isAdmin?orders.slice(0,50):orders.filter(o=>o.clientFid===currentUser.fid);
   if(!mine.length){el.innerHTML=`<div style="text-align:center;color:var(--muted);padding:18px;font-size:0.82rem;">لا توجد طلبات بعد</div>`;return;}
   const stMap={pending:{ic:'⏳',cls:'cwt',txt:'قيد المراجعة'},processing:{ic:'🔄',cls:'',txt:'قيد المعالجة'},completed:{ic:'✅',cls:'con',txt:'مكتمل'},rejected:{ic:'❌',cls:'cof',txt:'مرفوض'}};
   el.innerHTML=mine.map(o=>{
@@ -1619,6 +1628,31 @@ function renderMyOrders(){
       ${resultBox}
     </div>`;
   }).join('');
+}
+
+function renderAllCharges(){
+  const el=document.getElementById('allCharges');
+  if(!el) return;
+  getDocs(query(txCol)).then(snap=>{
+    const charges=snap.docs.map(d=>({...d.data(),fid:d.id})).sort((a,b)=>b.createdAt-a.createdAt);
+    if(!charges.length){el.innerHTML='<div style="text-align:center;color:var(--muted);padding:18px;font-size:0.82rem;">لا توجد عمليات شحن بعد</div>';return;}
+    el.innerHTML=charges.map(c=>{
+      const date=new Date(c.createdAt).toLocaleDateString('ar-LY');
+      const time=new Date(c.createdAt).toLocaleTimeString('ar-LY',{hour:'2-digit',minute:'2-digit'});
+      const amt=c.currency==='USDT'?`${c.amtUSDT} USDT (${c.amtLYD} د.ل)`:`${c.amtLYD} د.ل`;
+      return `<div class="ord-full" style="margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:38px;height:38px;border-radius:9px;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.25);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">💳</div>
+          <div style="flex:1;">
+            <div style="font-size:0.88rem;font-weight:700;">${c.clientName}</div>
+            <div style="font-size:0.72rem;color:var(--muted);">${date} ${time}</div>
+            <div style="font-size:0.74rem;margin-top:3px;">💰 الرصيد قبل: <span style="color:var(--muted);">${c.balBefore} د.ل</span> → بعد: <span style="color:var(--green);">${c.balAfter} د.ل</span></div>
+          </div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:0.9rem;color:var(--cyan);font-weight:700;flex-shrink:0;">+${amt}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }).catch(()=>el.innerHTML='<div style="text-align:center;color:var(--muted);padding:18px;">لا توجد بيانات</div>');
 }
 
 function renderAllOrders(){
