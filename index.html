@@ -850,6 +850,7 @@ const db = getFirestore(app);
 const svcCol = collection(db, 'services');
 const cliCol = collection(db, 'clients');
 const ordCol = collection(db, 'orders');
+const txCol = collection(db, 'transactions');
 const regCol = collection(db, 'registrations');
 const adsCol = collection(db, 'ads');
 const filesCol = collection(db, 'files');
@@ -1522,73 +1523,74 @@ ${imei?'📱 *IMEI:* '+imei+'\n':''}${sn?'🔢 *SN:* '+sn+'\n':''}${username?'�
 };
 
 
-// ===== MY ORDERS =====
 function renderMyTransactions(){
   const el=document.getElementById('myTransactions');
   if(!el||!currentUser) return;
-  const myOrds=orders.filter(o=>o.clientFid===currentUser.fid).sort((a,b)=>b.createdAt-a.createdAt);
   const me=clients.find(c=>c.fid===currentUser.fid);
   const cur=me?.currency||'LYD';
-  if(!myOrds.length){el.innerHTML='<div style="text-align:center;color:var(--muted);font-size:0.82rem;padding:20px;">لا توجد معاملات بعد</div>';return;}
 
-  // ملخص
-  const totalSpent = myOrds.filter(o=>o.status==='completed').reduce((a,o)=>a+(o.total||0),0);
-  const summary = `
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;">
+  // جلب الطلبات والشحن معاً
+  const myOrds=orders.filter(o=>o.clientFid===currentUser.fid);
+
+  // جلب سجل الشحن من Firebase
+  getDocs(query(txCol, where('clientFid','==',currentUser.fid))).then(snap=>{
+    const charges=snap.docs.map(d=>({...d.data(),fid:d.id,txType:'charge'}));
+    const ordItems=myOrds.map(o=>({...o,txType:'order'}));
+    const all=[...charges,...ordItems].sort((a,b)=>b.createdAt-a.createdAt);
+
+    if(!all.length){el.innerHTML='<div style="text-align:center;color:var(--muted);font-size:0.82rem;padding:20px;">لا توجد معاملات بعد</div>';return;}
+
+    const totalCharged=charges.reduce((a,c)=>a+(c.amtLYD||0),0);
+    const totalSpent=myOrds.filter(o=>o.status==='completed').reduce((a,o)=>a+(o.total||0),0);
+
+    const disp=(lyd)=>cur==='USDT'?`${(lyd/usdtRate).toFixed(2)} USDT`:`${lyd} د.ل`;
+
+    const summary=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;">
+      <div style="background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.15);border-radius:10px;padding:10px;text-align:center;">
+        <div style="font-family:'Orbitron',sans-serif;font-size:0.9rem;font-weight:700;color:var(--cyan);">${disp(totalCharged)}</div>
+        <div style="font-size:0.68rem;color:var(--muted);">إجمالي الشحن</div>
+      </div>
       <div style="background:rgba(255,68,68,0.08);border:1px solid rgba(255,68,68,0.15);border-radius:10px;padding:10px;text-align:center;">
-        <div style="font-family:'Orbitron',sans-serif;font-size:1rem;font-weight:700;color:var(--red);">${myOrds.length}</div>
-        <div style="font-size:0.68rem;color:var(--muted);">إجمالي الطلبات</div>
+        <div style="font-family:'Orbitron',sans-serif;font-size:0.9rem;font-weight:700;color:var(--red);">${disp(totalSpent)}</div>
+        <div style="font-size:0.68rem;color:var(--muted);">إجمالي المصروف</div>
       </div>
       <div style="background:rgba(0,230,118,0.08);border:1px solid rgba(0,230,118,0.15);border-radius:10px;padding:10px;text-align:center;">
-        <div style="font-family:'Orbitron',sans-serif;font-size:1rem;font-weight:700;color:var(--green);">${myOrds.filter(o=>o.status==='completed').length}</div>
-        <div style="font-size:0.68rem;color:var(--muted);">مكتملة</div>
-      </div>
-      <div style="background:rgba(245,200,66,0.08);border:1px solid rgba(245,200,66,0.15);border-radius:10px;padding:10px;text-align:center;">
-        <div style="font-family:'Orbitron',sans-serif;font-size:0.9rem;font-weight:700;color:var(--gold);">${totalSpent.toLocaleString('ar-LY')}</div>
-        <div style="font-size:0.68rem;color:var(--muted);">إجمالي المصروف د.ل</div>
+        <div style="font-family:'Orbitron',sans-serif;font-size:0.9rem;font-weight:700;color:var(--green);">${disp(totalCharged-totalSpent)}</div>
+        <div style="font-size:0.68rem;color:var(--muted);">الرصيد المتبقي</div>
       </div>
     </div>`;
 
-  el.innerHTML = summary + myOrds.map(o=>{
-    const date=new Date(o.createdAt).toLocaleDateString('ar-LY');
-    const time=new Date(o.createdAt).toLocaleTimeString('ar-LY',{hour:'2-digit',minute:'2-digit'});
-    const amt=cur==='USDT'?(o.totalUSDT||0).toFixed(2)+' USDT':(o.total||o.price||0)+' د.ل';
-    const balAfter=cur==='USDT'?(o.balanceAfter||0).toFixed(2)+' USDT':(o.balanceAfter||0)+' د.ل';
-    const balBefore=cur==='USDT'?(o.balanceBefore||0).toFixed(2)+' USDT':(o.balanceBefore||0)+' د.ل';
-    const st=o.status==='completed'
-      ?{c:'var(--green)',l:'✅ مكتمل',bg:'rgba(0,230,118,0.08)',bc:'rgba(0,230,118,0.2)'}
-      :o.status==='rejected'
-      ?{c:'var(--red)',l:'❌ مرفوض',bg:'rgba(255,68,68,0.08)',bc:'rgba(255,68,68,0.2)'}
-      :o.status==='processing'
-      ?{c:'var(--cyan)',l:'🔄 جاري التنفيذ',bg:'rgba(0,212,255,0.06)',bc:'rgba(0,212,255,0.15)'}
-      :{c:'var(--gold)',l:'⏳ قيد المراجعة',bg:'rgba(245,200,66,0.06)',bc:'rgba(245,200,66,0.15)'};
-
-    return `
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:8px;overflow:hidden;">
-      <!-- Header -->
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 13px;border-bottom:1px solid var(--border);">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <div style="width:32px;height:32px;border-radius:8px;background:${st.bg};border:1px solid ${st.bc};display:flex;align-items:center;justify-content:center;font-size:14px;">
-            ${o.status==='completed'?'✅':o.status==='rejected'?'❌':o.status==='processing'?'🔄':'⏳'}
+    el.innerHTML=summary+all.map(tx=>{
+      const date=new Date(tx.createdAt).toLocaleDateString('ar-LY');
+      const time=new Date(tx.createdAt).toLocaleTimeString('ar-LY',{hour:'2-digit',minute:'2-digit'});
+      if(tx.txType==='charge'){
+        const amt=disp(tx.amtLYD||0);
+        return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
+          <div style="width:36px;height:36px;border-radius:9px;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.25);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">💳</div>
+          <div style="flex:1;">
+            <div style="font-size:0.85rem;font-weight:700;">شحن رصيد</div>
+            <div style="font-size:0.72rem;color:var(--muted);">${date} ${time}</div>
           </div>
-          <div>
-            <div style="font-size:0.83rem;font-weight:700;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${o.serviceName||'—'}</div>
-            <div style="font-size:0.68rem;color:var(--muted);">${date} · ${time}</div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:0.88rem;color:var(--cyan);font-weight:700;">+${amt}</div>
+        </div>`;
+      } else {
+        const amt=disp(tx.total||tx.price||0);
+        const st=tx.status==='completed'?{c:'var(--green)',l:'✅'}:tx.status==='rejected'?{c:'var(--red)',l:'❌'}:tx.status==='processing'?{c:'var(--cyan)',l:'🔄'}:{c:'var(--gold)',l:'⏳'};
+        return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
+          <div style="width:36px;height:36px;border-radius:9px;background:rgba(255,68,68,0.08);border:1px solid rgba(255,68,68,0.2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">${st.l}</div>
+          <div style="flex:1;">
+            <div style="font-size:0.85rem;font-weight:700;">${tx.serviceName}</div>
+            <div style="font-size:0.72rem;color:var(--muted);">${date} ${time} · <span style="color:${st.c}">${st.l==='✅'?'مكتمل':st.l==='❌'?'مرفوض':st.l==='🔄'?'معالجة':'انتظار'}</span></div>
           </div>
-        </div>
-        <div style="text-align:left;">
           <div style="font-family:'Orbitron',sans-serif;font-size:0.88rem;color:var(--red);font-weight:700;">-${amt}</div>
-          <div style="font-size:0.68rem;color:${st.c};margin-top:2px;">${st.l}</div>
-        </div>
-      </div>
-      <!-- Details -->
-      <div style="display:flex;justify-content:space-between;padding:8px 13px;font-size:0.72rem;color:var(--muted);">
-        <span>الرصيد قبل: <strong style="color:var(--text);">${balBefore}</strong></span>
-        <span>الرصيد بعد: <strong style="color:var(--text);">${balAfter}</strong></span>
-      </div>
-    </div>`;
-  }).join('');
+        </div>`;
+      }
+    }).join('');
+  }).catch(()=>{
+    el.innerHTML='<div style="text-align:center;color:var(--muted);font-size:0.82rem;padding:20px;">لا توجد معاملات بعد</div>';
+  });
 }
+
 
 function renderMyOrders(){
   const el=document.getElementById('myOrders');
@@ -2173,6 +2175,18 @@ window.confirmCharge=async()=>{
   if(currentUser && currentUser.fid===currentChgClient.fid){
     currentUser.balance=newBal; currentUser.balanceUSDT=newBalUSDT;
   }
+
+  // حفظ سجل الشحن
+  await addDoc(txCol,{
+    clientFid: currentChgClient.fid,
+    clientName: currentChgClient.name,
+    type: "charge",
+    amtLYD, amtUSDT: amtUSDT||0,
+    balBefore: currentChgClient.balance||0,
+    balAfter: newBal,
+    currency: cur,
+    createdAt: Date.now()
+  });
 
   // تحديث الواجهة فوراً
   updateUserBar();
