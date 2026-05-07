@@ -187,8 +187,8 @@ textarea{resize:vertical;min-height:60px;}
 <!-- LOGIN -->
 <div id="loginScreen" class="screen" style="display:none;">
   <div class="auth-box">
-    <div style="font-size:2.8rem;margin-bottom:12px;">🔓</div>
-    <div class="brand">ABADAH UNLOCKER</div>
+    <div style="font-size:2.8rem;margin-bottom:12px;" id="loginIcon">🔓</div>
+    <div class="brand" id="loginTitle">ABADAH UNLOCKER</div>
     <p style="color:var(--muted);font-size:0.82rem;margin-bottom:26px;">سجّل دخولك للمتابعة</p>
     <div class="fg" style="margin-bottom:11px;text-align:right;"><label>البريد الإلكتروني</label><input type="email" id="liEmail" placeholder="example@email.com" style="text-align:center;"></div>
     <div class="fg" style="margin-bottom:18px;text-align:right;"><label>كلمة السر</label><input type="password" id="liPass" placeholder="••••••••" style="text-align:center;" onkeydown="if(event.key==='Enter')doLogin()"></div>
@@ -258,8 +258,8 @@ textarea{resize:vertical;min-height:60px;}
 
   <!-- HERO -->
   <div style="text-align:center;padding:36px 20px 26px;animation:fadeDown 0.7s ease both;">
-    <div class="hero-badge">🔓 Services Platform</div>
-    <div class="brand" style="margin-bottom:8px;">ABADAH UNLOCKER</div>
+    <div class="hero-badge" id="heroBadge">🔓 Services Platform</div>
+    <div class="brand" style="margin-bottom:8px;" id="heroTitle">ABADAH UNLOCKER</div>
     <p style="color:var(--text2);font-size:0.88rem;margin-bottom:18px;">خدمات احترافية · دفع سريع</p>
     <div class="stats">
       <div class="stat"><div class="stat-n" id="totalS">0</div><div class="stat-l">الخدمات</div></div>
@@ -471,7 +471,14 @@ textarea{resize:vertical;min-height:60px;}
   <!-- ADMIN -->
   <div class="panel" id="panel-admin">
 
-    <!-- إدارة ملفات الإصلاح -->
+    <!-- إعدادات الموقع -->
+    <div class="adm-form" style="margin-bottom:14px;">
+      <div class="sec-title">🎨 إعدادات الموقع</div>
+      <div class="fg" style="margin-bottom:9px;"><label>📝 اسم الموقع</label><input type="text" id="siteNameInput" placeholder="مثال: ABADAH UNLOCKER"></div>
+      <div class="fg" style="margin-bottom:9px;"><label>🏷️ الشعار الفرعي</label><input type="text" id="siteBadgeInput" placeholder="مثال: Services Platform"></div>
+      <div class="fg" style="margin-bottom:9px;"><label>🔣 الأيقونة (emoji)</label><input type="text" id="siteIconInput" placeholder="مثال: 🔓" maxlength="4"></div>
+      <button onclick="saveSiteSettings()" class="btn-p" style="width:100%;margin-top:0;">💾 حفظ الإعدادات</button>
+    </div>
     <div class="adm-form" style="margin-bottom:14px;">
       <div class="sec-title">⚠️ إدارة ملفات الإصلاح</div>
       <div style="font-size:0.78rem;color:var(--muted);margin-bottom:11px;">أضف ملفات إصلاح تظهر للزبائن</div>
@@ -930,6 +937,7 @@ function showApp(){
   updateUserBar();
   loadRealtime();
   loadUsdtRate();
+  loadSiteSettings();
 }
 
 // ===== SESSION =====
@@ -1018,6 +1026,50 @@ window.toggleFreeFiles=async fid=>{
   await updateDoc(doc(db,'clients',fid),{freeFiles:newVal});
   alert(newVal?`✅ تم تفعيل ملفات مجانية لـ ${c.name}`:`❌ تم إلغاء ملفات مجانية لـ ${c.name}`);
 };
+
+window.toggleBan=async fid=>{
+  const c=clients.find(x=>x.fid===fid);
+  if(!c) return;
+  const newVal=!c.banned;
+  await updateDoc(doc(db,'clients',fid),{banned:newVal});
+  alert(newVal?`🚫 تم حظر ${c.name}`:`✅ تم رفع الحظر عن ${c.name}`);
+};
+
+window.saveSiteSettings=async()=>{
+  const name=document.getElementById('siteNameInput').value.trim();
+  const badge=document.getElementById('siteBadgeInput').value.trim();
+  const icon=document.getElementById('siteIconInput').value.trim();
+  if(!name){alert('يرجى إدخال اسم الموقع');return;}
+  await setDoc(doc(db,'config','siteSettings'),{name,badge,icon});
+  applySiteSettings({name,badge,icon});
+  alert('✅ تم حفظ إعدادات الموقع');
+};
+
+function applySiteSettings(s){
+  if(!s) return;
+  if(s.name){
+    document.querySelectorAll('#heroTitle,#loginTitle').forEach(el=>el&&(el.textContent=s.name));
+    document.title=s.name;
+  }
+  if(s.badge) document.getElementById('heroBadge')&&(document.getElementById('heroBadge').innerHTML=`${s.icon||'🔓'} ${s.badge}`);
+  if(s.icon) document.getElementById('loginIcon')&&(document.getElementById('loginIcon').textContent=s.icon);
+}
+
+async function loadSiteSettings(){
+  try{
+    const snap=await getDocs(query(collection(db,'config')));
+    snap.forEach(d=>{
+      if(d.id==='siteSettings'){
+        const s=d.data();
+        applySiteSettings(s);
+        if(s.name) document.getElementById('siteNameInput')&&(document.getElementById('siteNameInput').value=s.name);
+        if(s.badge) document.getElementById('siteBadgeInput')&&(document.getElementById('siteBadgeInput').value=s.badge);
+        if(s.icon) document.getElementById('siteIconInput')&&(document.getElementById('siteIconInput').value=s.icon);
+      }
+      if(d.id==='usdtRate') usdtRate=d.data().rate||5;
+    });
+  }catch(e){}
+}
 
 window.buyFile=async fid=>{
   const f=files.find(x=>x.fid===fid);
@@ -1166,6 +1218,7 @@ window.doLogin = async () => {
     const cd=snap.docs[0]; const c=cd.data();
     if(c.password!==pass){ document.getElementById('liErr').textContent='❌ كلمة السر خاطئة'; btn.textContent='🔓 تسجيل الدخول'; btn.disabled=false; return; }
     if(c.status==='pending'){ showPending(); btn.textContent='🔓 تسجيل الدخول'; btn.disabled=false; return; }
+    if(c.banned){ document.getElementById('liErr').textContent='🚫 حسابك محظور. تواصل مع المسؤول.'; btn.textContent='🔓 تسجيل الدخول'; btn.disabled=false; return; }
     if(c.status==='rejected'){ document.getElementById('liErr').textContent='❌ تم رفض حسابك، تواصل مع المسؤول'; btn.textContent='🔓 تسجيل الدخول'; btn.disabled=false; return; }
     currentUser={name:c.name,email:c.email,phone:c.phone,fid:cd.id,isAdmin:false};
     localStorage.setItem('au_sess',JSON.stringify(currentUser));
@@ -1259,7 +1312,7 @@ window.switchTab = t => {
   if(t==='dashboard'){setTimeout(()=>updateDashboard(),100);}
   if(t==='clients'){renderClientsTab();}
   if(t==='files'){renderFiles();}
-  if(t==='admin'){loadTgConfig();loadUsdtRate();renderAdmin();renderClients();renderAllOrders();renderPending();}
+  if(t==='admin'){loadTgConfig();loadUsdtRate();loadSiteSettings();renderAdmin();renderClients();renderAllOrders();renderPending();}
 };
 
 window.setCategory=(btn,cat)=>{
@@ -1875,6 +1928,7 @@ function renderClients(){
       <div class="ali-ac">
         <button class="ib" onclick="openCharge('${c.fid}')" style="color:var(--gold);border-color:rgba(245,200,66,0.3);">💰</button>
         <button class="ib" onclick="toggleFreeFiles('${c.fid}')" style="color:${c.freeFiles?'var(--green)':'var(--muted)'};border-color:${c.freeFiles?'rgba(0,230,118,0.3)':'rgba(255,255,255,0.1)'}" title="${c.freeFiles?'ملفات مجانية مفعّلة':'تفعيل ملفات مجانية'}">🎁</button>
+        <button class="ib" onclick="toggleBan('${c.fid}')" style="color:${c.banned?'var(--red)':'var(--muted)'};border-color:${c.banned?'rgba(255,68,68,0.3)':'rgba(255,255,255,0.1)'}" title="${c.banned?'محظور — اضغط لرفع الحظر':'حظر الزبون'}">🚫</button>
         <button class="ib del" onclick="delClient('${c.fid}')">🗑</button>
       </div>
     </div>`).join('');
@@ -1901,6 +1955,7 @@ function renderClientsTab(){
       <div class="ali-ac">
         <button class="ib" onclick="openCharge('${c.fid}')" style="color:var(--gold);border-color:rgba(245,200,66,0.3);">💰</button>
         <button class="ib" onclick="toggleFreeFiles('${c.fid}')" style="color:${c.freeFiles?'var(--green)':'var(--muted)'};border-color:${c.freeFiles?'rgba(0,230,118,0.3)':'rgba(255,255,255,0.1)'}" title="${c.freeFiles?'ملفات مجانية مفعّلة':'تفعيل ملفات مجانية'}">🎁</button>
+        <button class="ib" onclick="toggleBan('${c.fid}')" style="color:${c.banned?'var(--red)':'var(--muted)'};border-color:${c.banned?'rgba(255,68,68,0.3)':'rgba(255,255,255,0.1)'}" title="${c.banned?'محظور — اضغط لرفع الحظر':'حظر الزبون'}">🚫</button>
         <button class="ib del" onclick="delClient('${c.fid}')">🗑</button>
       </div>
     </div>`).join('');
