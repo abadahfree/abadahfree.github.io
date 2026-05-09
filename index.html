@@ -2136,7 +2136,7 @@ async function sendTelegram(text){
   try{
     const r=await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`,{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({chat_id:tgChatId,text,parse_mode:'Markdown'})
+      body:JSON.stringify({chat_id:tgChatId,text:text.replace(/\*/g,'').replace(/_/g,'').replace(/`/g,'')})
     });
     return r.ok;
   }catch{return false;}
