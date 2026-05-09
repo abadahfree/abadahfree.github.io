@@ -1009,8 +1009,9 @@ if(saved){
 }
 
 function loadRealtime(){
-  onSnapshot(query(svcCol, orderBy('createdAt','desc')), snap=>{
+  onSnapshot(query(svcCol), snap=>{
     services=snap.docs.map(d=>({...d.data(),fid:d.id}));
+    services.sort((a,b)=>(a.order??999)-(b.order??999)||(a.createdAt||0)-(b.createdAt||0));
     updateStats(); renderServices(); renderAdmin();
   });
   onSnapshot(query(cliCol, orderBy('createdAt','desc')), snap=>{
@@ -1024,7 +1025,7 @@ function loadRealtime(){
     // إشعار داخلي للزبون
     if(!currentUser?.isAdmin && prev.length>0){
       orders.forEach(o=>{
-        if(o.clientId!==currentUser?.fid) return;
+        if(o.clientFid!==currentUser?.fid) return;
         const old=prev.find(p=>p.fid===o.fid);
         if(old && old.status!==o.status){
           if(o.status==='completed'){
@@ -2105,10 +2106,17 @@ window.toggleSvc=async fid=>{const s=services.find(x=>x.fid===fid);if(s)await up
 window.delSvc=async fid=>{if(confirm('حذف هذه الخدمة؟'))await deleteDoc(doc(db,'services',fid));};
 
 window.moveSvc=async(fid,dir)=>{
-  const sorted=[...services].sort((a,b)=>(a.order||0)-(b.order||0));
+  const sorted=[...services].sort((a,b)=>(a.order??999)-(b.order??999));
   const idx=sorted.findIndex(s=>s.fid===fid);
   const newIdx=idx+dir;
   if(newIdx<0||newIdx>=sorted.length) return;
+  // أعطِ كل خدمة رقم ترتيب إذا ما عندها
+  const updates=[];
+  sorted.forEach((s,i)=>{
+    if(s.order===undefined) updates.push(updateDoc(doc(db,'services',s.fid),{order:i}));
+  });
+  await Promise.all(updates);
+  // بدّل الترتيب
   const a=sorted[idx], b=sorted[newIdx];
   const aOrd=a.order??idx, bOrd=b.order??newIdx;
   await updateDoc(doc(db,'services',a.fid),{order:bOrd});
