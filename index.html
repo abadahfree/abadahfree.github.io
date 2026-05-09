@@ -267,6 +267,14 @@ textarea{resize:vertical;min-height:60px;}
 
 <!-- MAIN APP -->
 <div id="mainApp" style="display:none;">
+  <!-- إشعار داخلي -->
+  <div id="notifBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:998;background:linear-gradient(135deg,rgba(0,230,118,0.95),rgba(0,180,90,0.95));padding:12px 16px;display:none;align-items:center;justify-content:space-between;gap:10px;backdrop-filter:blur(10px);">
+    <div style="display:flex;align-items:center;gap:8px;flex:1;">
+      <span style="font-size:1.2rem;">🔔</span>
+      <span id="notifText" style="font-size:0.85rem;font-weight:700;color:#fff;"></span>
+    </div>
+    <button onclick="document.getElementById('notifBanner').style.display='none'" style="background:rgba(255,255,255,0.2);border:none;border-radius:6px;color:#fff;padding:4px 8px;cursor:pointer;font-size:0.8rem;">✕</button>
+  </div>
 <div class="wrap">
 
   <!-- HERO -->
@@ -1011,7 +1019,35 @@ function loadRealtime(){
     if(currentUser?.isAdmin) updateDashboard();
   });
   onSnapshot(query(ordCol, orderBy('createdAt','desc')), snap=>{
+    const prev=[...orders];
     orders=snap.docs.map(d=>({...d.data(),fid:d.id}));
+    // إشعار داخلي للزبون
+    if(!currentUser?.isAdmin && prev.length>0){
+      orders.forEach(o=>{
+        if(o.clientId!==currentUser?.fid) return;
+        const old=prev.find(p=>p.fid===o.fid);
+        if(old && old.status!==o.status){
+          if(o.status==='completed'){
+            const banner=document.getElementById('notifBanner');
+            const text=document.getElementById('notifText');
+            if(banner&&text){
+              text.textContent=`✅ تم قبول طلبك: ${o.serviceName}`;
+              banner.style.display='flex';
+              setTimeout(()=>banner.style.display='none',8000);
+            }
+          } else if(o.status==='rejected'){
+            const banner=document.getElementById('notifBanner');
+            const text=document.getElementById('notifText');
+            if(banner&&text){
+              banner.style.background='linear-gradient(135deg,rgba(255,68,68,0.95),rgba(200,30,30,0.95))';
+              text.textContent=`❌ تم رفض طلبك: ${o.serviceName}`;
+              banner.style.display='flex';
+              setTimeout(()=>banner.style.display='none',8000);
+            }
+          }
+        }
+      });
+    }
     renderMyOrders(); renderMyTransactions(); renderAllOrders();
     if(currentUser?.isAdmin) updateDashboard();
   });
@@ -1864,17 +1900,21 @@ function renderAllOrders(){
     return `<div class="ord-full ${st.cls}" style="animation-delay:${i*0.02}s">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px;">
         <div>
-          <div style="font-size:0.92rem;font-weight:700;margin-bottom:3px;">${st.ic} ${o.serviceName}</div>
+          <div style="font-size:0.92rem;font-weight:700;margin-bottom:3px;">${st.ic} ${o.serviceName}${o.qty>1?` <span style="color:var(--cyan);font-size:0.8rem;">×${o.qty}</span>`:''}</div>
           <div class="ali-m" style="margin-bottom:4px;">
             <span class="chip" style="background:rgba(0,212,255,0.08);color:var(--cyan);border-color:rgba(0,212,255,0.15);">👤 ${o.clientName}</span>
-            <span class="chip cg">💰 ${o.price} د.ل</span>
+            <span class="chip cg">💰 ${o.total||o.price} د.ل</span>
+            ${o.qty>1?`<span class="chip" style="background:rgba(0,212,255,0.06);color:var(--muted);">الواحد: ${o.price} د.ل</span>`:''}
             <span class="chip cc">${new Date(o.createdAt).toLocaleDateString('ar-LY')} ${new Date(o.createdAt).toLocaleTimeString('ar-LY',{hour:'2-digit',minute:'2-digit'})}</span>
           </div>
           <div class="ord-detail-row">📧 <span>${o.clientEmail||'—'}</span></div>
           ${o.clientPhone?`<div class="ord-detail-row">📞 <span>${o.clientPhone}</span></div>`:''}
           ${extra}
         </div>
-        <div style="flex-shrink:0;font-family:'Orbitron',sans-serif;font-size:1.1rem;font-weight:700;color:var(--gold);">${o.price}<small style="font-family:'Tajawal',sans-serif;font-size:0.65rem;color:var(--muted);">د.ل</small></div>
+        <div style="flex-shrink:0;text-align:center;">
+          <div style="font-family:'Orbitron',sans-serif;font-size:1.1rem;font-weight:700;color:var(--gold);">${o.total||o.price}<small style="font-family:'Tajawal',sans-serif;font-size:0.65rem;color:var(--muted);">د.ل</small></div>
+          ${o.qty>1?`<div style="font-size:0.7rem;color:var(--muted);">×${o.qty}</div>`:''}
+        </div>
       </div>
       ${actionBtns}
     </div>`;
@@ -1977,6 +2017,8 @@ function renderAdmin(){
             <label class="eib">🖼️ ${s.image?'تغيير':'إضافة'}<input type="file" accept="image/*" style="display:none" onchange="changeImg('${s.fid}',this)"></label>
           </div>
           <div class="ali-ac">
+            <button class="ib" onclick="moveSvc('${s.fid}',-1)" title="تحريك لأعلى">⬆️</button>
+            <button class="ib" onclick="moveSvc('${s.fid}',1)" title="تحريك لأسفل">⬇️</button>
             <button class="ib" onclick="openEditSvc('${s.fid}')">✏️</button>
             <button class="ib" onclick="toggleSvc('${s.fid}')">${s.active?'⏸':'▶️'}</button>
             <button class="ib del" onclick="delSvc('${s.fid}')">🗑</button>
@@ -2061,6 +2103,17 @@ window.addService=async()=>{
 };
 window.toggleSvc=async fid=>{const s=services.find(x=>x.fid===fid);if(s)await updateDoc(doc(db,'services',fid),{active:!s.active});};
 window.delSvc=async fid=>{if(confirm('حذف هذه الخدمة؟'))await deleteDoc(doc(db,'services',fid));};
+
+window.moveSvc=async(fid,dir)=>{
+  const sorted=[...services].sort((a,b)=>(a.order||0)-(b.order||0));
+  const idx=sorted.findIndex(s=>s.fid===fid);
+  const newIdx=idx+dir;
+  if(newIdx<0||newIdx>=sorted.length) return;
+  const a=sorted[idx], b=sorted[newIdx];
+  const aOrd=a.order??idx, bOrd=b.order??newIdx;
+  await updateDoc(doc(db,'services',a.fid),{order:bOrd});
+  await updateDoc(doc(db,'services',b.fid),{order:aOrd});
+};
 
 window.openEditSvc=fid=>{
   const s=services.find(x=>x.fid===fid);
