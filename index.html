@@ -1443,9 +1443,11 @@ function renderServices(){
           const plans=folder.plans||[];
           html+=`
           <div style="margin-bottom:10px;border-radius:14px;overflow:hidden;border:1px solid rgba(245,200,66,0.25);animation:slideIn 0.3s ease both;animation-delay:${fi*0.05}s">
-            <div onclick="toggleFolder('${folder.fid}')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:rgba(245,200,66,0.07);cursor:pointer;user-select:none;transition:background 0.2s;" onmouseover="this.style.background='rgba(245,200,66,0.12)'" onmouseout="this.style.background='rgba(245,200,66,0.07)'">
-              <div style="display:flex;align-items:center;gap:10px;">
-                <div style="width:38px;height:38px;border-radius:10px;background:rgba(245,200,66,0.15);border:1px solid rgba(245,200,66,0.3);display:flex;align-items:center;justify-content:center;font-size:1.2rem;">${folder.icon||'⚡'}</div>
+            <div onclick="toggleFolder('${folder.fid}')" style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;background:rgba(245,200,66,0.07);cursor:pointer;user-select:none;transition:background 0.2s;" onmouseover="this.style.background='rgba(245,200,66,0.12)'" onmouseout="this.style.background='rgba(245,200,66,0.07)'">
+              <div style="display:flex;align-items:center;gap:11px;">
+                ${folder.image
+                  ?`<img src="${folder.image}" style="width:44px;height:44px;border-radius:10px;object-fit:cover;border:1px solid rgba(245,200,66,0.3);flex-shrink:0;">`
+                  :`<div style="width:44px;height:44px;border-radius:10px;background:rgba(245,200,66,0.15);border:1px solid rgba(245,200,66,0.3);display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">${folder.icon||'⚡'}</div>`}
                 <div>
                   <div style="font-size:0.95rem;font-weight:700;">${folder.name}</div>
                   <div style="font-size:0.72rem;color:var(--muted);">${plans.length} خطة اشتراك</div>
@@ -1570,6 +1572,64 @@ window.openFolderOrder = (folderFid, planIndex) => {
   updateOrderTotal();
 };
 
+// ===== تحويل خدمة موجودة إلى مجلد =====
+let _convertSvcFid = null;
+window.openConvertToFolder = fid => {
+  const svc = services.find(s=>s.fid===fid);
+  if(!svc) return;
+  _convertSvcFid = fid;
+  document.getElementById('convertSvcName').textContent = svc.name;
+  document.getElementById('convertFolderName').value = svc.name;
+  document.getElementById('convertFolderIcon').value = svc.icon||'⚡';
+  document.getElementById('convertDuration').value = '';
+  document.getElementById('convertPrice').value = svc.price||'';
+  document.getElementById('convertDesc').value = svc.desc||'';
+  // صورة الخدمة إن وجدت
+  const prev = document.getElementById('convertImgPrev');
+  const ph = document.getElementById('convertImgPH');
+  if(svc.image){ prev.src=svc.image; prev.style.display='block'; ph.style.display='none'; }
+  else { prev.src=''; prev.style.display='none'; ph.style.display='block'; }
+  document.getElementById('convertToFolderMo').classList.add('open');
+};
+
+window.confirmConvertToFolder = async () => {
+  const svc = services.find(s=>s.fid===_convertSvcFid);
+  if(!svc) return;
+  const folderName = document.getElementById('convertFolderName').value.trim();
+  const icon = document.getElementById('convertFolderIcon').value.trim()||'⚡';
+  const duration = document.getElementById('convertDuration').value.trim();
+  const price = parseFloat(document.getElementById('convertPrice').value)||0;
+  const desc = document.getElementById('convertDesc').value.trim();
+  if(!folderName){alert('يرجى إدخال اسم المجلد');return;}
+  if(!duration){alert('يرجى إدخال مدة الاشتراك');return;}
+  if(!price){alert('يرجى إدخال السعر');return;}
+
+  const btn = document.getElementById('convertConfirmBtn');
+  btn.disabled=true; btn.textContent='جاري التحويل...';
+  try{
+    const imgSrc = document.getElementById('convertImgPrev').src;
+    const image = imgSrc && imgSrc.startsWith('data:') ? imgSrc : (svc.image||null);
+    const plans = [{duration, price, desc}];
+    await addDoc(toolFoldersCol, {name:folderName, icon, image, plans, createdAt:Date.now()});
+    // إخفاء الخدمة الأصلية (عدم حذفها للحفاظ على سجل الطلبات)
+    await updateDoc(doc(db,'services',_convertSvcFid),{active:false, _convertedToFolder:true});
+    document.getElementById('convertToFolderMo').classList.remove('open');
+    alert(`✅ تم تحويل "${folderName}" إلى مجلد!\nالخدمة الأصلية تم إخفاؤها.`);
+  }catch(e){ alert('حدث خطأ، حاول مجدداً'); console.error(e); }
+  finally{ btn.disabled=false; btn.textContent='✅ تحويل لمجلد'; }
+};
+
+window.previewConvertImg = input => {
+  const file=input.files[0]; if(!file) return;
+  const r=new FileReader();
+  r.onload=e=>{
+    document.getElementById('convertImgPrev').src=e.target.result;
+    document.getElementById('convertImgPrev').style.display='block';
+    document.getElementById('convertImgPH').style.display='none';
+  };
+  r.readAsDataURL(file);
+};
+
 // ===== RENDER TOOL FOLDERS ADMIN =====
 function renderToolFoldersAdmin(){
   const el = document.getElementById('toolFoldersList');
@@ -1583,13 +1643,18 @@ function renderToolFoldersAdmin(){
     return `<div style="background:var(--card);border:1px solid rgba(245,200,66,0.2);border-radius:13px;padding:14px;margin-bottom:10px;animation:slideIn 0.3s ease both;animation-delay:${fi*0.04}s">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
         <div style="display:flex;align-items:center;gap:9px;">
-          <span style="font-size:1.3rem;">${folder.icon||'⚡'}</span>
+          ${folder.image
+            ?`<img src="${folder.image}" style="width:42px;height:42px;border-radius:9px;object-fit:cover;border:1px solid rgba(245,200,66,0.3);">`
+            :`<div style="width:42px;height:42px;border-radius:9px;background:rgba(245,200,66,0.1);border:1px solid rgba(245,200,66,0.25);display:flex;align-items:center;justify-content:center;font-size:1.3rem;">${folder.icon||'⚡'}</div>`}
           <div>
             <div style="font-size:0.92rem;font-weight:700;">${folder.name}</div>
-            <div style="font-size:0.72rem;color:var(--muted);">${plans.length} خطة</div>
+            <div style="font-size:0.72rem;color:var(--muted);">${plans.length} خطة اشتراك</div>
           </div>
         </div>
-        <div style="display:flex;gap:6px;">
+        <div style="display:flex;gap:5px;align-items:center;">
+          <label style="display:inline-flex;align-items:center;gap:4px;padding:5px 9px;background:rgba(0,212,255,0.07);border:1px solid rgba(0,212,255,0.2);border-radius:7px;color:var(--cyan);font-size:0.72rem;cursor:pointer;font-family:'Tajawal',sans-serif;">
+            🖼️ صورة<input type="file" accept="image/*" style="display:none" onchange="changeFolderImg('${folder.fid}',this)">
+          </label>
           <button class="ib" onclick="openAddPlan('${folder.fid}')" title="إضافة خطة" style="color:var(--cyan);border-color:rgba(0,212,255,0.3);">➕</button>
           <button class="ib del" onclick="delToolFolder('${folder.fid}')" title="حذف الأداة">🗑</button>
         </div>
@@ -1611,7 +1676,13 @@ function renderToolFoldersAdmin(){
   }).join('');
 }
 
-// إضافة أداة جديدة
+// تغيير صورة المجلد
+window.changeFolderImg = (fid, input) => {
+  const file=input.files[0]; if(!file) return;
+  const r=new FileReader();
+  r.onload=async e=>await updateDoc(doc(db,'toolFolders',fid),{image:e.target.result});
+  r.readAsDataURL(file);
+};
 window.addToolFolder = async () => {
   const name = document.getElementById('tfName').value.trim();
   const icon = document.getElementById('tfIcon').value.trim()||'⚡';
@@ -2213,6 +2284,7 @@ function renderAdmin(){
             <div class="ali-m">
               <span class="chip cg">💰 ${s.price.toLocaleString('ar-LY')} د.ل</span>
               <span class="chip ${s.active?'con':'cof'}">${s.active?'✅ نشطة':'⏸ متوقفة'}</span>
+              ${cat.key==='تفعيل أدوات'?`<span class="chip" style="background:rgba(245,200,66,0.1);color:var(--gold);border-color:rgba(245,200,66,0.3);cursor:pointer;" onclick="openConvertToFolder('${s.fid}')">📁 تحويل لمجلد</span>`:''}
             </div>
             <label class="eib">🖼️ ${s.image?'تغيير':'إضافة'}<input type="file" accept="image/*" style="display:none" onchange="changeImg('${s.fid}',this)"></label>
           </div>
@@ -2849,6 +2921,40 @@ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;if(!lo
 window.installApp=()=>{if(dp){dp.prompt();dp.userChoice.then(()=>{dp=null;document.getElementById('installBanner').classList.remove('show');});}else alert('افتح القائمة (⋮) واختر "إضافة إلى الشاشة الرئيسية"');};
 window.dismissBanner=()=>{document.getElementById('installBanner').classList.remove('show');localStorage.setItem('pwa_dismissed','1');};
 </script>
+<!-- CONVERT TO FOLDER MODAL -->
+<div class="mo" id="convertToFolderMo" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="md" style="max-width:400px;">
+    <button class="mc" onclick="document.getElementById('convertToFolderMo').classList.remove('open')">✕</button>
+    <div style="font-size:1.1rem;font-weight:700;margin-bottom:4px;color:var(--gold);">📁 تحويل إلى مجلد</div>
+    <div id="convertSvcName" style="font-size:0.82rem;color:var(--muted);margin-bottom:14px;"></div>
+
+    <!-- صورة المجلد -->
+    <div style="margin-bottom:12px;">
+      <label style="font-size:0.76rem;color:var(--muted);font-weight:600;display:block;margin-bottom:6px;">🖼️ صورة المجلد (اختياري)</label>
+      <div onclick="document.getElementById('convertImgInput').click()" style="border:2px dashed var(--border);border-radius:10px;padding:12px;text-align:center;cursor:pointer;position:relative;overflow:hidden;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div id="convertImgPH" style="color:var(--muted);font-size:0.8rem;"><div style="font-size:1.4rem;margin-bottom:2px;">🖼️</div>اضغط لرفع صورة</div>
+        <img id="convertImgPrev" src="" style="display:none;max-height:90px;border-radius:7px;max-width:100%;object-fit:cover;">
+        <input type="file" id="convertImgInput" accept="image/*" style="display:none" onchange="previewConvertImg(this)">
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:9px;">
+      <div class="fg" style="flex:1;"><label>📁 اسم المجلد *</label><input type="text" id="convertFolderName" placeholder="مثال: Sigma Tool"></div>
+      <div class="fg" style="width:75px;"><label>أيقونة</label><input type="text" id="convertFolderIcon" placeholder="⚡" style="text-align:center;"></div>
+    </div>
+    <div style="background:rgba(245,200,66,0.06);border:1px solid rgba(245,200,66,0.2);border-radius:10px;padding:11px;margin-bottom:11px;">
+      <div style="font-size:0.76rem;color:var(--gold);font-weight:700;margin-bottom:8px;">⏱️ أول خطة اشتراك</div>
+      <div class="fg" style="margin-bottom:7px;"><label>المدة *</label><input type="text" id="convertDuration" placeholder="مثال: 3 شهور"></div>
+      <div class="fg" style="margin-bottom:7px;"><label>السعر (د.ل) *</label><input type="number" id="convertPrice" placeholder="50" min="1"></div>
+      <div class="fg"><label>ملاحظة (اختياري)</label><input type="text" id="convertDesc" placeholder="تفاصيل..."></div>
+    </div>
+    <div style="background:rgba(255,68,68,0.06);border:1px solid rgba(255,68,68,0.15);border-radius:9px;padding:9px;margin-bottom:12px;font-size:0.75rem;color:var(--muted);">
+      ⚠️ الخدمة الأصلية ستُخفى تلقائياً بعد التحويل (سجل الطلبات القديم يبقى)
+    </div>
+    <button id="convertConfirmBtn" onclick="confirmConvertToFolder()" class="btn-p" style="width:100%;margin-top:0;background:linear-gradient(135deg,rgba(245,200,66,0.4),rgba(245,200,66,0.2));color:var(--gold);border:1px solid rgba(245,200,66,0.4);">✅ تحويل لمجلد</button>
+  </div>
+</div>
+
 <!-- ADD PLAN MODAL -->
 <div class="mo" id="addPlanMo" onclick="if(event.target===this)this.classList.remove('open')">
   <div class="md" style="max-width:360px;">
