@@ -19,7 +19,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 @keyframes slideIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
 @keyframes modalIn{from{opacity:0;transform:scale(0.85) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}@keyframes loadBar{0%{width:0%;margin-left:0}50%{width:60%;margin-left:20%}100%{width:0%;margin-left:100%}}
 #loadingScreen{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
 .spinner{width:48px;height:48px;border:3px solid var(--border);border-top-color:var(--cyan);border-radius:50%;animation:spin 0.8s linear infinite;}
 .screen{position:fixed;inset:0;background:var(--bg);z-index:990;display:flex;align-items:center;justify-content:center;padding:16px;}
@@ -57,6 +57,15 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .svc-price{font-family:'Orbitron',sans-serif;font-size:1.15rem;font-weight:700;color:var(--gold);}
 .svc-price span{font-family:'Tajawal',sans-serif;font-size:0.7rem;color:var(--muted);font-weight:400;}
 .btn-order{padding:8px 16px;background:linear-gradient(135deg,var(--cyan),var(--cyan2));border:none;border-radius:9px;color:#000;font-family:'Tajawal',sans-serif;font-size:0.82rem;font-weight:700;cursor:pointer;transition:transform 0.15s,box-shadow 0.2s;}
+.svc-tag{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:0.65rem;font-weight:700;margin-bottom:5px;}
+.tag-new{background:rgba(0,230,118,0.15);color:var(--green);border:1px solid rgba(0,230,118,0.3);}
+.tag-hot{background:rgba(255,68,68,0.15);color:var(--red);border:1px solid rgba(255,68,68,0.3);}
+.tag-sale{background:rgba(245,200,66,0.15);color:var(--gold);border:1px solid rgba(245,200,66,0.3);}
+.svc-counter{font-size:0.68rem;color:var(--muted);margin-top:4px;}
+.debt-card{background:var(--surface);border:1px solid rgba(255,68,68,0.25);border-radius:13px;padding:14px;margin-bottom:10px;animation:slideIn 0.3s ease both;}
+.color-picker-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.color-swatch{width:36px;height:36px;border-radius:8px;border:2px solid var(--border);cursor:pointer;transition:transform 0.15s;}
+.color-swatch:hover{transform:scale(1.1);}
 .btn-order:hover{transform:scale(1.05);box-shadow:0 4px 14px rgba(0,212,255,0.4);}
 .acc-card{background:var(--surface);border:1px solid rgba(0,212,255,0.12);border-radius:16px;padding:20px;margin-bottom:14px;}
 .bal-box{text-align:center;padding:20px;background:rgba(245,200,66,0.06);border:1px solid rgba(245,200,66,0.15);border-radius:12px;margin-bottom:16px;}
@@ -177,7 +186,16 @@ textarea{resize:vertical;min-height:60px;}
 <body>
 
 <!-- LOADING -->
-<div id="loadingScreen">
+<div id="loadingScreen" style="background:var(--bg);">
+  <div style="text-align:center;">
+    <div style="font-size:4rem;margin-bottom:16px;animation:blink 1.5s infinite;">🔓</div>
+    <div style="font-family:'Orbitron',sans-serif;font-size:1.6rem;font-weight:900;background:linear-gradient(135deg,#fff,var(--cyan),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;">ABADAH UNLOCKER</div>
+    <div style="color:var(--muted);font-size:0.8rem;margin-bottom:24px;">جاري التحميل...</div>
+    <div style="width:120px;height:3px;background:var(--border);border-radius:10px;margin:0 auto;overflow:hidden;">
+      <div style="height:100%;background:linear-gradient(90deg,var(--cyan),var(--gold));border-radius:10px;animation:loadBar 1.5s ease-in-out infinite;"></div>
+    </div>
+  </div>
+
   <div style="font-size:3rem;">🔓</div>
   <div style="font-family:'Orbitron',sans-serif;font-size:1.1rem;color:var(--cyan);">ABADAH UNLOCKER</div>
   <div class="spinner"></div>
@@ -293,6 +311,7 @@ textarea{resize:vertical;min-height:60px;}
     <button class="tab" id="clientsTab" onclick="switchTab('clients')" style="display:none;">👥 الزبائن</button>
     <button class="tab" id="chargesTab" onclick="switchTab('charges')" style="display:none;">💳 سجل الشحن</button>
     <button class="tab" id="ordersTab" onclick="switchTab('orders')" style="display:none;">📋 سجل الطلبات</button>
+    <button class="tab" id="debtTab" onclick="switchTab('debt')" style="display:none;">💸 الديون</button>
     <button class="tab" id="filesTab" onclick="switchTab('files')" style="display:none;">⚠️ ملفات إصلاح</button>
     <button class="tab" id="adminTab" onclick="askPin()" style="display:none;">⚙️ الإدارة</button>
   </div>
@@ -574,6 +593,14 @@ textarea{resize:vertical;min-height:60px;}
         </div>
       </div>
       <div class="fg" style="margin-bottom:9px;"><label>وصف</label><textarea id="aDesc" placeholder="وصف الخدمة..."></textarea></div>
+        <div class="fg" style="margin-bottom:9px;"><label>🏷️ تاق الخدمة</label>
+          <select id="aTag" style="width:100%;padding:10px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Tajawal',sans-serif;">
+            <option value="">بدون تاق</option>
+            <option value="new">🟢 جديد</option>
+            <option value="hot">🔴 رائج</option>
+            <option value="sale">🟡 عرض</option>
+          </select>
+        </div>
 
       <!-- حقول مطلوبة من الزبون - تختار أنت -->
       <div style="background:rgba(0,212,255,0.04);border:1px solid rgba(0,212,255,0.15);border-radius:10px;padding:13px;margin-bottom:11px;">
@@ -634,6 +661,25 @@ textarea{resize:vertical;min-height:60px;}
     </div>
     <div id="ordersTabCount" style="font-size:0.76rem;color:var(--muted);margin-bottom:10px;"></div>
     <div id="allOrdersTab"></div>
+  </div>
+
+  <!-- DEBT PANEL -->
+  <div class="panel" id="panel-debt">
+    <div style="font-size:0.8rem;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">💸 سجل الديون</div>
+
+    <!-- إضافة دين -->
+    <div class="adm-form" style="border-color:rgba(255,68,68,0.2);margin-bottom:16px;">
+      <div class="sec-title">➕ إضافة دين</div>
+      <div class="form-grid">
+        <div class="fg"><label>👤 اسم المدين</label><input type="text" id="debtName" placeholder="اسم الزبون"></div>
+        <div class="fg"><label>💰 المبلغ (د.ل)</label><input type="number" id="debtAmt" placeholder="100" min="1"></div>
+      </div>
+      <div class="fg" style="margin-bottom:9px;"><label>📝 السبب</label><input type="text" id="debtNote" placeholder="سبب الدين..."></div>
+      <button onclick="addDebt()" class="btn-p" style="background:rgba(255,68,68,0.15);color:var(--red);border:1px solid rgba(255,68,68,0.3);">➕ إضافة دين</button>
+    </div>
+
+    <div id="debtStats" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;"></div>
+    <div id="debtList"></div>
   </div>
 
   <!-- CHARGES PANEL -->
@@ -951,6 +997,7 @@ function showApp(){
   document.getElementById('clientsTab').style.display = isAdmin ? 'flex' : 'none';
   document.getElementById('chargesTab').style.display = isAdmin ? 'flex' : 'none';
   document.getElementById('ordersTab').style.display = isAdmin ? 'flex' : 'none';
+  document.getElementById('debtTab').style.display = isAdmin ? 'flex' : 'none';
   document.getElementById('filesTab').style.display = 'flex';
   document.getElementById('guestBtns').style.display = 'none';
   document.getElementById('logoutBtn').style.display = 'block';
@@ -1341,6 +1388,7 @@ window.switchTab = t => {
   if(t==='files'){renderFiles();}
   if(t==='admin'){loadTgConfig();loadUsdtRate();loadSiteSettings();renderAdmin();renderPending();}
   if(t==='charges'){renderAllChargesTab();}
+  if(t==='debt'){renderDebts();}
   if(t==='orders'){renderAllOrdersTab();}
 };
 
@@ -1370,7 +1418,9 @@ function renderServices(){
     html+=list.map((s,i)=>`
       <div class="svc-card" style="animation-delay:${i*0.05}s">
         ${s.image?`<img class="svc-img" src="${s.image}" alt="${s.name}">`:`<div class="svc-ph">${s.icon}</div>`}
+        ${s.tag==='new'?'<span class="svc-tag tag-new">✨ جديد</span>':s.tag==='hot'?'<span class="svc-tag tag-hot">🔥 رائج</span>':s.tag==='sale'?'<span class="svc-tag tag-sale">💥 عرض</span>':''}
         <div class="svc-name">${s.name}</div>
+        <div class="svc-counter">📦 ${orders.filter(o=>o.serviceFid===s.fid&&o.status==='completed').length} طلب مكتمل</div>
         <div class="svc-desc">${s.desc||'خدمة احترافية سريعة وموثوقة'}</div>
         <div class="svc-row">
           <div class="svc-price">${(()=>{const me=clients.find(c=>c.fid===currentUser?.fid);const cur=me?.currency||'LYD';if(cur==='USDT'){const p=(s.price/usdtRate);return p.toFixed(2)+' <span>USDT</span>';}return s.price.toLocaleString('ar-LY')+' <span>د.ل</span>';})()}</div>
@@ -2107,6 +2157,109 @@ window.confirmResult = async () => {
   btn.disabled=false; btn.textContent='✅ إرسال للزبون';
   currentResultOrderFid = null;
 };
+
+// ===== الألوان =====
+const COLOR_VARS = {cyan:'--cyan',gold:'--gold',bg:'--bg',green:'--green'};
+function previewColor(key, val){
+  document.documentElement.style.setProperty(COLOR_VARS[key], val);
+}
+function saveColors(){
+  const colors={};
+  ['cyan','gold','bg','green'].forEach(k=>{
+    colors[k]=document.getElementById('color'+k.charAt(0).toUpperCase()+k.slice(1)).value;
+  });
+  localStorage.setItem('site_colors', JSON.stringify(colors));
+  Object.entries(colors).forEach(([k,v])=>document.documentElement.style.setProperty(COLOR_VARS[k],v));
+  alert('✅ تم حفظ الألوان!');
+}
+function resetColors(){
+  localStorage.removeItem('site_colors');
+  const defaults={cyan:'#00d4ff',gold:'#f5c842',bg:'#080b12',green:'#00e676'};
+  Object.entries(defaults).forEach(([k,v])=>document.documentElement.style.setProperty(COLOR_VARS[k],v));
+  ['cyan','gold','bg','green'].forEach(k=>{
+    const el=document.getElementById('color'+k.charAt(0).toUpperCase()+k.slice(1));
+    if(el) el.value=defaults[k];
+  });
+  alert('✅ تم إعادة التعيين!');
+}
+function loadSavedColors(){
+  try{
+    const colors=JSON.parse(localStorage.getItem('site_colors')||'{}');
+    Object.entries(colors).forEach(([k,v])=>{
+      if(COLOR_VARS[k]) document.documentElement.style.setProperty(COLOR_VARS[k],v);
+      const el=document.getElementById('color'+k.charAt(0).toUpperCase()+k.slice(1));
+      if(el) el.value=v;
+    });
+  }catch{}
+}
+// تحميل الألوان عند البدء
+document.addEventListener('DOMContentLoaded', loadSavedColors);
+
+// ===== الديون =====
+const debtCol = collection(db, 'debts');
+
+window.addDebt = async () => {
+  const name=document.getElementById('debtName').value.trim();
+  const amt=parseFloat(document.getElementById('debtAmt').value);
+  const note=document.getElementById('debtNote').value.trim();
+  if(!name||!amt){alert('يرجى إدخال الاسم والمبلغ');return;}
+  await addDoc(debtCol,{name,amt,note:note||'',paid:false,createdAt:Date.now()});
+  document.getElementById('debtName').value='';
+  document.getElementById('debtAmt').value='';
+  document.getElementById('debtNote').value='';
+  renderDebts();
+};
+
+window.payDebt = async (fid) => {
+  if(!confirm('هل تم سداد هذا الدين؟')) return;
+  await updateDoc(doc(db,'debts',fid),{paid:true, paidAt:Date.now()});
+  renderDebts();
+};
+
+window.delDebt = async (fid) => {
+  if(!confirm('حذف هذا الدين؟')) return;
+  await deleteDoc(doc(db,'debts',fid));
+  renderDebts();
+};
+
+async function renderDebts(){
+  const el=document.getElementById('debtList');
+  const statsEl=document.getElementById('debtStats');
+  if(!el) return;
+  const snap=await getDocs(query(debtCol));
+  const debts=snap.docs.map(d=>({...d.data(),fid:d.id})).sort((a,b)=>b.createdAt-a.createdAt);
+  const unpaid=debts.filter(d=>!d.paid);
+  const totalUnpaid=unpaid.reduce((a,d)=>a+d.amt,0);
+  const totalPaid=debts.filter(d=>d.paid).reduce((a,d)=>a+d.amt,0);
+  if(statsEl) statsEl.innerHTML=`
+    <div style="background:rgba(255,68,68,0.08);border:1px solid rgba(255,68,68,0.2);border-radius:11px;padding:12px;text-align:center;">
+      <div style="font-family:'Orbitron',sans-serif;font-size:1.1rem;font-weight:700;color:var(--red);">${totalUnpaid.toLocaleString('ar-LY')}</div>
+      <div style="font-size:0.72rem;color:var(--muted);">ديون غير مسددة (د.ل)</div>
+    </div>
+    <div style="background:rgba(0,230,118,0.08);border:1px solid rgba(0,230,118,0.2);border-radius:11px;padding:12px;text-align:center;">
+      <div style="font-family:'Orbitron',sans-serif;font-size:1.1rem;font-weight:700;color:var(--green);">${totalPaid.toLocaleString('ar-LY')}</div>
+      <div style="font-size:0.72rem;color:var(--muted);">تم تحصيلها (د.ل)</div>
+    </div>`;
+  if(!debts.length){el.innerHTML='<div style="text-align:center;color:var(--muted);padding:20px;">لا توجد ديون 🎉</div>';return;}
+  el.innerHTML=debts.map(d=>`
+    <div class="debt-card" style="${d.paid?'opacity:0.6':''}">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:38px;height:38px;border-radius:9px;background:${d.paid?'rgba(0,230,118,0.1)':'rgba(255,68,68,0.1)'};border:1px solid ${d.paid?'rgba(0,230,118,0.25)':'rgba(255,68,68,0.25)'};display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">${d.paid?'✅':'💸'}</div>
+        <div style="flex:1;">
+          <div style="font-size:0.9rem;font-weight:700;">${d.name}</div>
+          ${d.note?`<div style="font-size:0.74rem;color:var(--muted);">${d.note}</div>`:''}
+          <div style="font-size:0.7rem;color:var(--muted);">${new Date(d.createdAt).toLocaleDateString('ar-LY')} ${d.paid?'· ✅ مسدد':''}</div>
+        </div>
+        <div style="text-align:left;">
+          <div style="font-family:'Orbitron',sans-serif;font-size:0.95rem;font-weight:700;color:${d.paid?'var(--green)':'var(--red)'};">${d.amt} د.ل</div>
+          ${!d.paid?`<div style="display:flex;gap:4px;margin-top:5px;">
+            <button onclick="payDebt('${d.fid}')" style="padding:4px 8px;background:rgba(0,230,118,0.12);border:1px solid rgba(0,230,118,0.25);border-radius:6px;color:var(--green);font-family:'Tajawal',sans-serif;font-size:0.72rem;cursor:pointer;">✅ سدد</button>
+            <button onclick="delDebt('${d.fid}')" style="padding:4px 8px;background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.2);border-radius:6px;color:var(--red);font-family:'Tajawal',sans-serif;font-size:0.72rem;cursor:pointer;">🗑</button>
+          </div>`:''}
+        </div>
+      </div>
+    </div>`).join('');
+}
 
 // ===== تيليغرام =====
 let tgToken=localStorage.getItem('tg_token')||'';
