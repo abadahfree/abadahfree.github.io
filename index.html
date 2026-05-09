@@ -267,14 +267,6 @@ textarea{resize:vertical;min-height:60px;}
 
 <!-- MAIN APP -->
 <div id="mainApp" style="display:none;">
-  <!-- إشعار داخلي -->
-  <div id="notifBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:998;background:linear-gradient(135deg,rgba(0,230,118,0.95),rgba(0,180,90,0.95));padding:12px 16px;display:none;align-items:center;justify-content:space-between;gap:10px;backdrop-filter:blur(10px);">
-    <div style="display:flex;align-items:center;gap:8px;flex:1;">
-      <span style="font-size:1.2rem;">🔔</span>
-      <span id="notifText" style="font-size:0.85rem;font-weight:700;color:#fff;"></span>
-    </div>
-    <button onclick="document.getElementById('notifBanner').style.display='none'" style="background:rgba(255,255,255,0.2);border:none;border-radius:6px;color:#fff;padding:4px 8px;cursor:pointer;font-size:0.8rem;">✕</button>
-  </div>
 <div class="wrap">
 
   <!-- HERO -->
@@ -1009,9 +1001,8 @@ if(saved){
 }
 
 function loadRealtime(){
-  onSnapshot(query(svcCol), snap=>{
+  onSnapshot(query(svcCol, orderBy('createdAt','desc')), snap=>{
     services=snap.docs.map(d=>({...d.data(),fid:d.id}));
-    services.sort((a,b)=>(a.order??999)-(b.order??999)||(a.createdAt||0)-(b.createdAt||0));
     updateStats(); renderServices(); renderAdmin();
   });
   onSnapshot(query(cliCol, orderBy('createdAt','desc')), snap=>{
@@ -1020,35 +1011,7 @@ function loadRealtime(){
     if(currentUser?.isAdmin) updateDashboard();
   });
   onSnapshot(query(ordCol, orderBy('createdAt','desc')), snap=>{
-    const prev=[...orders];
     orders=snap.docs.map(d=>({...d.data(),fid:d.id}));
-    // إشعار داخلي للزبون
-    if(!currentUser?.isAdmin && prev.length>0){
-      orders.forEach(o=>{
-        if(o.clientFid!==currentUser?.fid) return;
-        const old=prev.find(p=>p.fid===o.fid);
-        if(old && old.status!==o.status){
-          if(o.status==='completed'){
-            const banner=document.getElementById('notifBanner');
-            const text=document.getElementById('notifText');
-            if(banner&&text){
-              text.textContent=`✅ تم قبول طلبك: ${o.serviceName}`;
-              banner.style.display='flex';
-              setTimeout(()=>banner.style.display='none',8000);
-            }
-          } else if(o.status==='rejected'){
-            const banner=document.getElementById('notifBanner');
-            const text=document.getElementById('notifText');
-            if(banner&&text){
-              banner.style.background='linear-gradient(135deg,rgba(255,68,68,0.95),rgba(200,30,30,0.95))';
-              text.textContent=`❌ تم رفض طلبك: ${o.serviceName}`;
-              banner.style.display='flex';
-              setTimeout(()=>banner.style.display='none',8000);
-            }
-          }
-        }
-      });
-    }
     renderMyOrders(); renderMyTransactions(); renderAllOrders();
     if(currentUser?.isAdmin) updateDashboard();
   });
@@ -1600,7 +1563,7 @@ window.confirmOrder = async () => {
       clientFid:currentUser.fid, clientName:currentUser.name,
       clientEmail:currentUser.email, clientPhone:currentUser.phone||'',
       serviceFid:s.fid, serviceName:s.name,
-      price:unitPrice, unitPrice, qty, total:totalLYD, totalUSDT, currency:cur,
+      price:s.price, qty, total:totalLYD, totalUSDT, currency:cur,
       balanceBefore:balLYD, balanceAfter:afterLYD,
       note:note||'', imei:imei||'', sn:sn||'',
       username:username||'', email:email||'',
@@ -1739,7 +1702,7 @@ function renderMyOrders(){
       <div style="display:flex;align-items:center;gap:10px;">
         <div style="width:34px;height:34px;border-radius:8px;background:rgba(0,0,0,0.2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">${st.ic}</div>
         <div style="flex:1;min-width:0;">
-          <div style="font-size:0.85rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${o.serviceName}</div>
+          <div style="font-size:0.85rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${o.serviceName}${o.qty&&o.qty>1?` <span style="font-family:'Orbitron',sans-serif;font-size:0.72rem;background:rgba(0,212,255,0.12);color:var(--cyan);border:1px solid rgba(0,212,255,0.25);border-radius:20px;padding:1px 7px;margin-right:4px;">× ${o.qty}</span>`:''}</div>
           <div style="font-size:0.72rem;color:var(--muted);">${new Date(o.createdAt).toLocaleDateString('ar-LY')} · <span style="color:${col};font-weight:700;">${st.txt}</span></div>
         </div>
         <div style="font-family:'Orbitron',sans-serif;font-size:0.85rem;color:var(--red);font-weight:700;flex-shrink:0;">-${o.price} د.ل</div>
@@ -1781,10 +1744,11 @@ function renderAllOrdersTab(){
     return `<div class="ord-full ${st2.cls}" style="animation-delay:${i*0.02}s">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px;">
         <div>
-          <div style="font-size:0.92rem;font-weight:700;margin-bottom:3px;">${st2.ic} ${o.serviceName}</div>
+          <div style="font-size:0.92rem;font-weight:700;margin-bottom:3px;">${st2.ic} ${o.serviceName}${o.qty&&o.qty>1?` <span style="font-family:'Orbitron',sans-serif;font-size:0.72rem;background:rgba(0,212,255,0.12);color:var(--cyan);border:1px solid rgba(0,212,255,0.25);border-radius:20px;padding:1px 8px;margin-right:4px;">× ${o.qty}</span>`:''}</div>
           <div class="ali-m" style="margin-bottom:4px;">
             <span class="chip" style="background:rgba(0,212,255,0.08);color:var(--cyan);border-color:rgba(0,212,255,0.15);">👤 ${o.clientName}</span>
-            <span class="chip cg">💰 ${o.price} د.ل</span>
+            ${o.qty&&o.qty>1?`<span class="chip" style="background:rgba(0,212,255,0.1);color:var(--cyan);border-color:rgba(0,212,255,0.2);">📦 الكمية: ${o.qty}</span>`:''}
+            <span class="chip cg">💰 ${o.total||o.price} د.ل</span>
             <span class="chip cc">${new Date(o.createdAt).toLocaleDateString('ar-LY')}</span>
           </div>
           ${o.imei?`<div class="ord-detail-row">📱 IMEI: <span>${o.imei}</span></div>`:''}
@@ -1901,21 +1865,17 @@ function renderAllOrders(){
     return `<div class="ord-full ${st.cls}" style="animation-delay:${i*0.02}s">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px;">
         <div>
-          <div style="font-size:0.92rem;font-weight:700;margin-bottom:3px;">${st.ic} ${o.serviceName} <span style="color:var(--cyan);font-size:0.8rem;">×${o.qty||((o.unitPrice||o.price)>0?Math.round((o.total||o.price)/(o.unitPrice||o.price)):1)}</span></div>
+          <div style="font-size:0.92rem;font-weight:700;margin-bottom:3px;">${st.ic} ${o.serviceName}</div>
           <div class="ali-m" style="margin-bottom:4px;">
             <span class="chip" style="background:rgba(0,212,255,0.08);color:var(--cyan);border-color:rgba(0,212,255,0.15);">👤 ${o.clientName}</span>
-            <span class="chip cg">💰 ${o.total||o.price} د.ل</span>
-            ${(o.qty||((o.unitPrice||o.price)>0?Math.round((o.total||o.price)/(o.unitPrice||o.price)):1))>1?`<span class="chip" style="background:rgba(0,212,255,0.06);color:var(--muted);">الواحد: ${o.unitPrice||o.price} د.ل</span>`:''}
+            <span class="chip cg">💰 ${o.price} د.ل</span>
             <span class="chip cc">${new Date(o.createdAt).toLocaleDateString('ar-LY')} ${new Date(o.createdAt).toLocaleTimeString('ar-LY',{hour:'2-digit',minute:'2-digit'})}</span>
           </div>
           <div class="ord-detail-row">📧 <span>${o.clientEmail||'—'}</span></div>
           ${o.clientPhone?`<div class="ord-detail-row">📞 <span>${o.clientPhone}</span></div>`:''}
           ${extra}
         </div>
-        <div style="flex-shrink:0;text-align:center;">
-          <div style="font-family:'Orbitron',sans-serif;font-size:1.1rem;font-weight:700;color:var(--gold);">${o.total||o.price}<small style="font-family:'Tajawal',sans-serif;font-size:0.65rem;color:var(--muted);">د.ل</small></div>
-          <div style="font-size:0.7rem;color:var(--muted);">×${o.qty||((o.unitPrice||o.price)>0?Math.round((o.total||o.price)/(o.unitPrice||o.price)):1)}</div>
-        </div>
+        <div style="flex-shrink:0;font-family:'Orbitron',sans-serif;font-size:1.1rem;font-weight:700;color:var(--gold);">${o.price}<small style="font-family:'Tajawal',sans-serif;font-size:0.65rem;color:var(--muted);">د.ل</small></div>
       </div>
       ${actionBtns}
     </div>`;
@@ -2018,8 +1978,6 @@ function renderAdmin(){
             <label class="eib">🖼️ ${s.image?'تغيير':'إضافة'}<input type="file" accept="image/*" style="display:none" onchange="changeImg('${s.fid}',this)"></label>
           </div>
           <div class="ali-ac">
-            <button class="ib" onclick="moveSvc('${s.fid}',-1)" title="تحريك لأعلى">⬆️</button>
-            <button class="ib" onclick="moveSvc('${s.fid}',1)" title="تحريك لأسفل">⬇️</button>
             <button class="ib" onclick="openEditSvc('${s.fid}')">✏️</button>
             <button class="ib" onclick="toggleSvc('${s.fid}')">${s.active?'⏸':'▶️'}</button>
             <button class="ib del" onclick="delSvc('${s.fid}')">🗑</button>
@@ -2104,24 +2062,6 @@ window.addService=async()=>{
 };
 window.toggleSvc=async fid=>{const s=services.find(x=>x.fid===fid);if(s)await updateDoc(doc(db,'services',fid),{active:!s.active});};
 window.delSvc=async fid=>{if(confirm('حذف هذه الخدمة؟'))await deleteDoc(doc(db,'services',fid));};
-
-window.moveSvc=async(fid,dir)=>{
-  const sorted=[...services].sort((a,b)=>(a.order??999)-(b.order??999));
-  const idx=sorted.findIndex(s=>s.fid===fid);
-  const newIdx=idx+dir;
-  if(newIdx<0||newIdx>=sorted.length) return;
-  // أعطِ كل خدمة رقم ترتيب إذا ما عندها
-  const updates=[];
-  sorted.forEach((s,i)=>{
-    if(s.order===undefined) updates.push(updateDoc(doc(db,'services',s.fid),{order:i}));
-  });
-  await Promise.all(updates);
-  // بدّل الترتيب
-  const a=sorted[idx], b=sorted[newIdx];
-  const aOrd=a.order??idx, bOrd=b.order??newIdx;
-  await updateDoc(doc(db,'services',a.fid),{order:bOrd});
-  await updateDoc(doc(db,'services',b.fid),{order:aOrd});
-};
 
 window.openEditSvc=fid=>{
   const s=services.find(x=>x.fid===fid);
