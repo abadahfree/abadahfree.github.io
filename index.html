@@ -2747,23 +2747,13 @@ window.testTg=async()=>{
 async function sendTelegram(text){
   if(!tgToken||!tgChatId) return false;
   try{
-    const r=await fetch('https://wandering-grass-b2f6.abadah19.workers.dev/',{
+    const r=await fetch('https://damp-hall-fc90.abadah19.workers.dev/',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({token:tgToken, chat_id:tgChatId, text:text.replace(/[*_`]/g,'')})
     });
     return r.ok;
-  }catch(e){
-    try{
-      await new Promise(r=>setTimeout(r,1000));
-      const r2=await fetch('https://wandering-grass-b2f6.abadah19.workers.dev/',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({token:tgToken, chat_id:tgChatId, text:text.replace(/[*_`]/g,'')})
-      });
-      return r2.ok;
-    }catch{return false;}
-  }
+  }catch(e){ return false; }
 }
 
 // ===== ADMIN CLIENTS =====
