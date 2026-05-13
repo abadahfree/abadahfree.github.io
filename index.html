@@ -2306,11 +2306,20 @@ function renderAllOrders(){
   const stMap={pending:{ic:'⏳',txt:'قيد المراجعة',cls:'pending'},processing:{ic:'🔄',txt:'قيد المعالجة',cls:'processing'},completed:{ic:'✅',txt:'مكتمل',cls:'completed'},rejected:{ic:'❌',txt:'مرفوض',cls:'rejected'}};
   el.innerHTML=filtered.slice(0,100).map((o,i)=>{
     const st=stMap[o.status]||stMap.pending;
+    const date=new Date(o.createdAt);
+    const fullDate=date.toLocaleDateString('ar-LY',{year:'numeric',month:'long',day:'numeric'});
+    const fullTime=date.toLocaleTimeString('ar-LY',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const qty=o.qty||((o.unitPrice||o.price)>0?Math.round((o.total||o.price)/(o.unitPrice||o.price)):1);
     const extra=[
       o.imei?`<div class="ord-detail-row">📱 IMEI: <span>${o.imei}</span></div>`:'',
       o.sn?`<div class="ord-detail-row">🔢 SN: <span>${o.sn}</span></div>`:'',
       o.username?`<div class="ord-detail-row">👤 Username: <span>${o.username}</span></div>`:'',
       o.email?`<div class="ord-detail-row">📧 Email: <span>${o.email}</span></div>`:'',
+      o.phone?`<div class="ord-detail-row">📞 هاتف الخدمة: <span>${o.phone}</span></div>`:'',
+      o.password?`<div class="ord-detail-row">🔑 كلمة السر: <span>${o.password}</span></div>`:'',
+      o.lookscreen?`<div class="ord-detail-row">🔒 Lookscreen: <span>${o.lookscreen}</span></div>`:'',
+      o.anydesk?`<div class="ord-detail-row">🖥️ AnyDesk: <span>${o.anydesk}</span></div>`:'',
+      o.ultraviewer?`<div class="ord-detail-row">👁️ UltraViewer: <span>${o.ultraviewer}</span></div>`:'',
       o.note?`<div class="ord-detail-row">📝 ملاحظة: <span>${o.note}</span></div>`:''
     ].filter(Boolean).join('');
     const actionBtns = o.status!=='completed'&&o.status!=='rejected'?`
@@ -2319,22 +2328,34 @@ function renderAllOrders(){
         <button class="btn-approve" onclick="setOrderStatus('${o.fid}','completed')">✅ موافقة</button>
         <button class="btn-reject" onclick="setOrderStatus('${o.fid}','rejected')">❌ رفض</button>
       </div>`:
-      `<div style="font-size:0.76rem;color:var(--muted);margin-top:6px;">الحالة النهائية: <strong style="color:${o.status==='completed'?'var(--green)':'var(--red)'}">${st.txt}</strong></div>`;
+      `<div style="margin-top:8px;padding:8px 12px;background:${o.status==='completed'?'rgba(0,230,118,0.08)':'rgba(255,68,68,0.08)'};border:1px solid ${o.status==='completed'?'rgba(0,230,118,0.2)':'rgba(255,68,68,0.2)'};border-radius:8px;font-size:0.8rem;">الحالة النهائية: <strong style="color:${o.status==='completed'?'var(--green)':'var(--red)'}">${st.ic} ${st.txt}</strong></div>`;
     return `<div class="ord-full ${st.cls}" style="animation-delay:${i*0.02}s">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px;">
-        <div>
-          <div style="font-size:0.92rem;font-weight:700;margin-bottom:3px;">${st.ic} ${o.serviceName}</div>
-          <div class="ali-m" style="margin-bottom:4px;">
-            <span class="chip" style="background:rgba(0,212,255,0.08);color:var(--cyan);border-color:rgba(0,212,255,0.15);">👤 ${o.clientName}</span>
-            <span class="chip cg">💰 ${o.price} د.ل</span>
-            <span class="chip cc">${new Date(o.createdAt).toLocaleDateString('ar-LY')} ${new Date(o.createdAt).toLocaleTimeString('ar-LY',{hour:'2-digit',minute:'2-digit'})}</span>
+      <!-- رأس البطاقة -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border);">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:1.3rem;">${st.ic}</span>
+          <div>
+            <div style="font-size:0.95rem;font-weight:700;">${o.serviceName}${qty>1?` <span style="font-family:'Orbitron',sans-serif;font-size:0.72rem;background:rgba(0,212,255,0.12);color:var(--cyan);border:1px solid rgba(0,212,255,0.25);border-radius:20px;padding:1px 7px;">×${qty}</span>`:''}</div>
+            <div style="font-size:0.72rem;color:var(--muted);margin-top:2px;">📅 ${fullDate} · 🕐 ${fullTime}</div>
           </div>
-          <div class="ord-detail-row">📧 <span>${o.clientEmail||'—'}</span></div>
-          ${o.clientPhone?`<div class="ord-detail-row">📞 <span>${o.clientPhone}</span></div>`:''}
-          ${extra}
         </div>
-        <div style="flex-shrink:0;font-family:'Orbitron',sans-serif;font-size:1.1rem;font-weight:700;color:var(--gold);">${o.price}<small style="font-family:'Tajawal',sans-serif;font-size:0.65rem;color:var(--muted);">د.ل</small></div>
+        <div style="text-align:left;">
+          <div style="font-family:'Orbitron',sans-serif;font-size:1.2rem;font-weight:700;color:var(--gold);">${o.total||o.price}<small style="font-family:'Tajawal',sans-serif;font-size:0.65rem;color:var(--muted);">د.ل</small></div>
+          ${qty>1?`<div style="font-size:0.7rem;color:var(--muted);text-align:center;">الواحد: ${o.unitPrice||o.price} د.ل</div>`:''}
+        </div>
       </div>
+      <!-- بيانات الزبون -->
+      <div style="background:rgba(0,212,255,0.04);border:1px solid rgba(0,212,255,0.1);border-radius:9px;padding:10px;margin-bottom:10px;">
+        <div style="font-size:0.72rem;color:var(--cyan);font-weight:700;margin-bottom:7px;text-transform:uppercase;letter-spacing:1px;">👤 بيانات الزبون</div>
+        <div class="ord-detail-row">الاسم: <span>${o.clientName||'—'}</span></div>
+        <div class="ord-detail-row">📧 <span>${o.clientEmail||'—'}</span></div>
+        ${o.clientPhone?`<div class="ord-detail-row">📞 <span>${o.clientPhone}</span></div>`:''}
+      </div>
+      <!-- بيانات الطلب -->
+      ${extra?`<div style="background:rgba(245,200,66,0.04);border:1px solid rgba(245,200,66,0.1);border-radius:9px;padding:10px;margin-bottom:10px;">
+        <div style="font-size:0.72rem;color:var(--gold);font-weight:700;margin-bottom:7px;text-transform:uppercase;letter-spacing:1px;">📋 بيانات الطلب</div>
+        ${extra}
+      </div>`:''}
       ${actionBtns}
     </div>`;
   }).join('');
