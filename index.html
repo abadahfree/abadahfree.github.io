@@ -1487,6 +1487,7 @@ function renderServices(){
           <div class="svc-desc">${s.desc||'خدمة احترافية سريعة وموثوقة'}</div>
           <div class="svc-row">
             <div class="svc-price">${currentUser?(()=>{const me=clients.find(c=>c.fid===currentUser?.fid);const cur=me?.currency||'LYD';if(cur==='USDT'){const p=(s.price/usdtRate);return p.toFixed(2)+' <span>USDT</span>';}return s.price.toLocaleString('ar-LY')+' <span>د.ل</span>';})():'<span style="font-size:0.75rem;color:var(--muted);">🔒 سجّل للعرض</span>'}</div>
+            <button class="btn-order" onclick="openOrder('${s.fid}')">اطلب الخدمة</button>
           </div>
         </div>`).join('');
       }
