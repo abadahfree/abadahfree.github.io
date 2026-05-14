@@ -181,6 +181,34 @@ textarea{resize:vertical;min-height:60px;}
 .ad-item{display:flex;align-items:center;gap:9px;padding:9px;background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:7px;}
 .ad-item img{width:52px;height:42px;object-fit:cover;border-radius:7px;flex-shrink:0;}
 .ad-item-info{flex:1;min-width:0;font-size:0.8rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* ===== STATUS BADGE ===== */
+.svc-status-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 9px;border-radius:20px;font-size:0.68rem;font-weight:700;
+  margin-bottom:6px;
+}
+.svc-status-badge.online{
+  background:rgba(0,230,118,0.13);
+  color:var(--green);
+  border:1px solid rgba(0,230,118,0.3);
+}
+.svc-status-badge.offline{
+  background:rgba(255,68,68,0.13);
+  color:var(--red);
+  border:1px solid rgba(255,68,68,0.3);
+}
+.svc-status-dot{
+  width:7px;height:7px;border-radius:50%;flex-shrink:0;
+}
+.svc-status-badge.online .svc-status-dot{
+  background:var(--green);
+  box-shadow:0 0 6px var(--green);
+  animation:blink 1.8s ease-in-out infinite;
+}
+.svc-status-badge.offline .svc-status-dot{
+  background:var(--red);
+}
 </style>
 </head>
 <body>
@@ -1481,6 +1509,7 @@ function renderServices(){
         html+=normalSvcs.map((s,i)=>`
         <div class="svc-card" style="animation-delay:${i*0.05}s">
           ${s.image?`<img class="svc-img" src="${s.image}" alt="${s.name}">`:`<div class="svc-ph">${s.icon}</div>`}
+          <span class="svc-status-badge ${s.active?'online':'offline'}"><span class="svc-status-dot"></span>${s.active?'أون لاين':'أوف لاين'}</span>
           ${s.tag==='new'?'<span class="svc-tag tag-new">✨ جديد</span>':s.tag==='hot'?'<span class="svc-tag tag-hot">🔥 رائج</span>':s.tag==='sale'?'<span class="svc-tag tag-sale">💥 عرض</span>':''}
           <div class="svc-name">${s.name}</div>
           <div class="svc-counter">📦 ${orders.filter(o=>o.serviceFid===s.fid&&o.status==='completed').length} طلب مكتمل</div>
@@ -1500,6 +1529,7 @@ function renderServices(){
     html+=list.map((s,i)=>`
       <div class="svc-card" style="animation-delay:${i*0.05}s">
         ${s.image?`<img class="svc-img" src="${s.image}" alt="${s.name}">`:`<div class="svc-ph">${s.icon}</div>`}
+        <span class="svc-status-badge ${s.active?'online':'offline'}"><span class="svc-status-dot"></span>${s.active?'أون لاين':'أوف لاين'}</span>
         ${s.tag==='new'?'<span class="svc-tag tag-new">✨ جديد</span>':s.tag==='hot'?'<span class="svc-tag tag-hot">🔥 رائج</span>':s.tag==='sale'?'<span class="svc-tag tag-sale">💥 عرض</span>':''}
         <div class="svc-name">${s.name}</div>
         <div class="svc-counter">📦 ${orders.filter(o=>o.serviceFid===s.fid&&o.status==='completed').length} طلب مكتمل</div>
