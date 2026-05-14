@@ -44,7 +44,8 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .cat-btn{flex-shrink:0;padding:8px 15px;background:var(--surface);border:1px solid var(--border);border-radius:30px;color:var(--muted);font-family:'Tajawal',sans-serif;font-size:0.82rem;font-weight:600;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
 .cat-btn.active{background:linear-gradient(135deg,rgba(0,212,255,0.15),rgba(0,153,204,0.1));border-color:var(--cyan);color:var(--cyan);}
 .cat-hdr{grid-column:1/-1;display:flex;align-items:center;gap:9px;padding:9px 0 3px;font-size:0.95rem;font-weight:700;color:var(--text2);border-bottom:1px solid var(--border);margin-bottom:3px;}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:13px;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:13px;}
+@media(max-width:480px){.grid{grid-template-columns:1fr;}}
 .svc-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;position:relative;overflow:hidden;transition:transform 0.2s,border-color 0.2s,box-shadow 0.2s;animation:slideIn 0.4s ease both;}
 .svc-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--cyan),var(--gold));opacity:0;transition:opacity 0.2s;}
 .svc-card:hover{transform:translateY(-3px);border-color:rgba(0,212,255,0.3);box-shadow:0 12px 30px rgba(0,212,255,0.1);}
@@ -349,15 +350,26 @@ textarea{resize:vertical;min-height:60px;}
     </div>
 
     <div class="sw" style="margin-bottom:13px;"><span class="si">🔍</span><input type="text" id="searchSvc" placeholder="ابحث عن خدمة..." oninput="clearTimeout(window._st);window._st=setTimeout(()=>{activeCat='';document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));const fb=document.querySelector('.cat-btn');if(fb)fb.classList.add('active');renderServices();},200)"></div>
-    <div class="cat-scroll">
-      <button class="cat-btn active" onclick="setCategory(this,'')">🔓 الكل</button>
-      <button class="cat-btn" onclick="setCategory(this,'إيجار أدوات')">🔧 إيجار أدوات</button>
-      <button class="cat-btn" onclick="setCategory(this,'تفعيل أدوات')">⚡ تفعيل أدوات</button>
-      <button class="cat-btn" onclick="setCategory(this,'خدمات FRP')">🛡️ خدمات FRP</button>
-      <button class="cat-btn" onclick="setCategory(this,'خدمات iCloud')">☁️ خدمات iCloud</button>
-      <button class="cat-btn" onclick="setCategory(this,'خدمات حسابات')">👤 خدمات حسابات</button>
+
+    <!-- Layout: sidebar + grid -->
+    <div style="display:flex;gap:11px;align-items:flex-start;">
+
+      <!-- الخدمات -->
+      <div style="flex:1;min-width:0;">
+        <div class="grid" id="servicesGrid"></div>
+      </div>
+
+      <!-- الفئات عمودية على اليمين -->
+      <div style="display:flex;flex-direction:column;gap:7px;width:110px;flex-shrink:0;position:sticky;top:12px;">
+        <button class="cat-btn active" onclick="setCategory(this,'')" style="width:100%;text-align:center;border-radius:12px;padding:10px 8px;font-size:0.78rem;">🔓 الكل</button>
+        <button class="cat-btn" onclick="setCategory(this,'إيجار أدوات')" style="width:100%;text-align:center;border-radius:12px;padding:10px 8px;font-size:0.78rem;">🔧 إيجار<br>أدوات</button>
+        <button class="cat-btn" onclick="setCategory(this,'تفعيل أدوات')" style="width:100%;text-align:center;border-radius:12px;padding:10px 8px;font-size:0.78rem;">⚡ تفعيل<br>أدوات</button>
+        <button class="cat-btn" onclick="setCategory(this,'خدمات FRP')" style="width:100%;text-align:center;border-radius:12px;padding:10px 8px;font-size:0.78rem;">🛡️ خدمات<br>FRP</button>
+        <button class="cat-btn" onclick="setCategory(this,'خدمات iCloud')" style="width:100%;text-align:center;border-radius:12px;padding:10px 8px;font-size:0.78rem;">☁️ خدمات<br>iCloud</button>
+        <button class="cat-btn" onclick="setCategory(this,'خدمات حسابات')" style="width:100%;text-align:center;border-radius:12px;padding:10px 8px;font-size:0.78rem;">👤 خدمات<br>حسابات</button>
+      </div>
+
     </div>
-    <div class="grid" id="servicesGrid"></div>
   </div>
 
   <!-- ACCOUNT -->
