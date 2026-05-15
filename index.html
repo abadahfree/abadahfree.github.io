@@ -1216,12 +1216,19 @@ if(saved){
 }
 
 function loadRealtime(){
+  let _firstLoad=true;
   onSnapshot(query(svcCol, orderBy('createdAt','desc')), snap=>{
     services=snap.docs.map(d=>({...d.data(),fid:d.id}));
     updateStats();
     const q=document.getElementById('searchSvc')?.value||'';
     if(!q) renderServices();
     renderAdmin(); renderLiveStatus();
+    // أول تحميل: تأكد إن catBar ظاهر
+    if(_firstLoad){
+      _firstLoad=false;
+      const cb=document.getElementById('catBar');
+      if(cb) cb.classList.add('visible');
+    }
   });
   onSnapshot(query(cliCol, orderBy('createdAt','desc')), snap=>{
     clients=snap.docs.map(d=>({...d.data(),fid:d.id}));
