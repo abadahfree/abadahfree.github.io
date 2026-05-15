@@ -458,7 +458,7 @@ textarea{resize:vertical;min-height:60px;}
       <button class="cat-btn" onclick="setCategory(this,'خدمات حسابات')">👤 خدمات حسابات</button>
     </div>
 
-    <div class="sw" style="margin-bottom:13px;margin-top:8px;"><span class="si">🔍</span><input type="text" id="searchSvc" placeholder="ابحث عن خدمة..." oninput="clearTimeout(window._st);window._st=setTimeout(()=>{activeCat='';document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));const fb=document.querySelector('.cat-btn');if(fb)fb.classList.add('active');renderServices();},200)"></div>
+    <div class="sw" style="margin-bottom:13px;margin-top:8px;"><span class="si">🔍</span><input type="text" id="searchSvc" placeholder="ابحث عن خدمة..." oninput="activeCat='';document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));const fb=document.querySelector('.cat-btn');if(fb)fb.classList.add('active');renderServices();"></div>
 
     <!-- الخدمات - عمود واحد عريض -->
     <div class="grid" id="servicesGrid"></div>
@@ -1428,23 +1428,22 @@ function renderAdsSlider(){
   let cur=0;
   window.goToAd=(i)=>{
     cur=i;
-    const slides=track.querySelectorAll('.ad-slide');
-    if(slides[i]){
-      const track2=document.getElementById('adsTrack');
-      if(track2){
-        const slideWidth=slides[i].offsetWidth+10;
-        track2.scrollLeft=slideWidth*i;
-      }
+    const trackEl=document.getElementById('adsTrack');
+    if(trackEl){
+      const totalWidth=trackEl.scrollWidth;
+      const perSlide=totalWidth/ads.length;
+      trackEl.scrollLeft=perSlide*i;
     }
     ads.forEach((_,j)=>{const d=document.getElementById('dot-'+j);if(d)d.style.background=j===i?'var(--cyan)':'var(--border)';});
   };
-  // نبدأ بعد ثانية عشان يكتمل التحميل
+  // بدء التحريك التلقائي بعد اكتمال التحميل
   setTimeout(()=>{
+    clearInterval(window._adsInterval);
     window._adsInterval=setInterval(()=>{
       cur=(cur+1)%ads.length;
       window.goToAd(cur);
     },2500);
-  },1500);
+  },2000);
 }
 
 function renderAdsList(){
