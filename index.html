@@ -458,6 +458,7 @@ textarea{resize:vertical;min-height:60px;}
       <button class="cat-btn" onclick="setCategory(this,'خدمات حسابات')">👤 خدمات حسابات</button>
     </div>
 
+    <div id="searchDebug" style="font-size:0.72rem;color:var(--cyan);padding:4px 0;min-height:16px;"></div>
     <div class="sw" style="margin-bottom:13px;margin-top:8px;"><span class="si">🔍</span><input type="text" id="searchSvc" placeholder="ابحث عن خدمة..." oninput="activeCat='';document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));const fb=document.querySelector('.cat-btn');if(fb)fb.classList.add('active');renderServices();document.getElementById('servicesGrid')?.scrollIntoView&&void 0;"></div>
 
     <!-- الخدمات - عمود واحد عريض -->
@@ -1728,6 +1729,9 @@ function renderServices(){
   const q=(document.getElementById('searchSvc')?.value||'').toLowerCase();
   const grid=document.getElementById('servicesGrid');
   if(!grid) return;
+  // DEBUG: أظهر المعلومات
+  const dbg=document.getElementById('searchDebug');
+  if(dbg) dbg.textContent=`بحث: "${q}" | خدمات: ${services.length} | زبائن: ${clients.length}`;
   const cats=[
     {key:'إيجار أدوات',icon:'🔧'},{key:'تفعيل أدوات',icon:'⚡'},
     {key:'خدمات FRP',icon:'🛡️'},{key:'خدمات iCloud',icon:'☁️'},{key:'خدمات حسابات',icon:'👤'}
