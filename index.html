@@ -1429,7 +1429,13 @@ function renderAdsSlider(){
   window.goToAd=(i)=>{
     cur=i;
     const slides=track.querySelectorAll('.ad-slide');
-    if(slides[i]) slides[i].scrollIntoView({behavior:'smooth',block:'nearest',inline:'start'});
+    if(slides[i]){
+      const track2=document.getElementById('adsTrack');
+      if(track2){
+        const slideWidth=slides[i].offsetWidth+10;
+        track2.scrollLeft=slideWidth*i;
+      }
+    }
     ads.forEach((_,j)=>{const d=document.getElementById('dot-'+j);if(d)d.style.background=j===i?'var(--cyan)':'var(--border)';});
   };
   // نبدأ بعد ثانية عشان يكتمل التحميل
@@ -1678,6 +1684,7 @@ window.switchTab = t => {
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   const p=document.getElementById('panel-'+t);
   if(p) p.classList.add('active');
+  window.scrollTo({top:0,behavior:'instant'});
   if(t==='account'){updateUserBar();renderMyOrders();renderMyTransactions();}
   if(t==='dashboard'){setTimeout(()=>updateDashboard(),100);}
   if(t==='clients'){renderClientsTab();}
