@@ -458,7 +458,7 @@ textarea{resize:vertical;min-height:60px;}
       <button class="cat-btn" onclick="setCategory(this,'خدمات حسابات')">👤 خدمات حسابات</button>
     </div>
 
-    <div class="sw" style="margin-bottom:13px;margin-top:8px;"><span class="si">🔍</span><input type="text" id="searchSvc" placeholder="ابحث عن خدمة..." oninput="activeCat='';document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));const fb=document.querySelector('.cat-btn');if(fb)fb.classList.add('active');renderServices();document.getElementById('servicesGrid')?.scrollIntoView&&void 0;"></div>
+    <div class="sw" style="margin-bottom:13px;margin-top:8px;"><span class="si">🔍</span><input type="text" id="searchSvc" placeholder="ابحث عن خدمة..." oninput="doSearch()"></div>
 
     <!-- الخدمات - عمود واحد عريض -->
     <div class="grid" id="servicesGrid"></div>
@@ -1218,7 +1218,10 @@ if(saved){
 function loadRealtime(){
   onSnapshot(query(svcCol, orderBy('createdAt','desc')), snap=>{
     services=snap.docs.map(d=>({...d.data(),fid:d.id}));
-    updateStats(); renderServices(); renderAdmin(); renderLiveStatus();
+    updateStats();
+    const q=document.getElementById('searchSvc')?.value||'';
+    if(!q) renderServices();
+    renderAdmin(); renderLiveStatus();
   });
   onSnapshot(query(cliCol, orderBy('createdAt','desc')), snap=>{
     clients=snap.docs.map(d=>({...d.data(),fid:d.id}));
@@ -1246,7 +1249,8 @@ function loadRealtime(){
   });
   onSnapshot(query(toolFoldersCol, orderBy('createdAt','asc')), snap=>{
     toolFolders=snap.docs.map(d=>({...d.data(),fid:d.id}));
-    renderServices();
+    const q=document.getElementById('searchSvc')?.value||'';
+    if(!q) renderServices();
     renderToolFoldersAdmin();
   });
 }
@@ -1688,6 +1692,25 @@ function updateStats(){
   document.getElementById('activeS').textContent=services.filter(s=>s.active).length;
   const avg=services.length?Math.round(services.reduce((a,s)=>a+s.price,0)/services.length):0;
   document.getElementById('avgS').textContent=avg.toLocaleString('ar-LY');
+}
+
+function doSearch(){
+  const p=document.getElementById('panel-services');
+  if(p&&!p.classList.contains('active')){
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+    p.classList.add('active');
+    document.querySelectorAll('.nav-btn,.tab').forEach(b=>{
+      const oc=b.getAttribute('onclick')||'';
+      b.classList.toggle('active',oc.includes("switchTab('services')"));
+    });
+    const cb=document.getElementById('catBar');
+    if(cb) cb.classList.add('visible');
+  }
+  activeCat='';
+  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
+  const fb=document.querySelector('.cat-btn');
+  if(fb) fb.classList.add('active');
+  renderServices();
 }
 
 // ===== TABS =====
