@@ -1766,7 +1766,7 @@ function renderServices(){
           <div class="svc-desc">${s.desc||'خدمة احترافية سريعة وموثوقة'}</div>
           <div class="svc-row">
             <div class="svc-price">${currentUser?(()=>{const me=clients.find(c=>c.fid===currentUser?.fid);const cur=me?.currency||'LYD';if(cur==='USDT'){const p=(s.price/usdtRate);return p.toFixed(2)+' <span>USDT</span>';}return s.price.toLocaleString('ar-LY')+' <span>د.ل</span>';})():'<span style="font-size:0.75rem;color:var(--muted);">🔒 سجّل للعرض</span>'}</div>
-            ${!s.active?`<span style="padding:7px 14px;background:rgba(255,68,68,0.12);border:1px solid rgba(255,68,68,0.3);border-radius:9px;color:var(--red);font-size:0.78rem;font-weight:700;">متوقفة مؤقتاً</span>`:''}
+            <button class="btn-order" onclick="openOrder('${s.fid}')">اطلب الخدمة</button>
           </div>
         </div>`).join('');
       }
@@ -1789,7 +1789,7 @@ function renderServices(){
           <div class="svc-price">${currentUser?(()=>{const me=clients.find(c=>c.fid===currentUser?.fid);const cur=me?.currency||'LYD';if(cur==='USDT'){const p=(s.price/usdtRate);return p.toFixed(2)+' <span>USDT</span>';}return s.price.toLocaleString('ar-LY')+' <span>د.ل</span>';})():'<span style="font-size:0.75rem;color:var(--muted);">🔒 سجّل للعرض</span>'}</div>
           ${s.active
             ?`<button class="btn-order" onclick="openOrder('${s.fid}')">اطلب الخدمة</button>`
-            :`<span style="padding:7px 14px;background:rgba(255,68,68,0.12);border:1px solid rgba(255,68,68,0.3);border-radius:9px;color:var(--red);font-size:0.78rem;font-weight:700;">متوقفة مؤقتاً</span>`}
+            :`<button class="btn-order" onclick="openOrder('${s.fid}')">اطلب الخدمة</button>`}
         </div>
       </div>`).join('');
   });
