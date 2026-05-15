@@ -1708,7 +1708,10 @@ function renderServices(){
     if(cat.key==='تفعيل أدوات'){
       const folders=toolFolders.filter(f=>!q||f.name.toLowerCase().includes(q));
       // الخدمات العادية في نفس القسم (إن وُجدت) — نعرض الكل بما فيها المتوقفة
-      const normalSvcs=services.filter(s=>s.category===cat.key&&(s.name.toLowerCase().includes(q)||(s.desc||'').toLowerCase().includes(q)));
+      // جمع IDs الخدمات داخل المجلدات لتجنب تكرارها
+      const folderSvcIds=new Set();
+      toolFolders.forEach(f=>(f.plans||[]).forEach(p=>{ if(p.svcId) folderSvcIds.add(p.svcId); }));
+      const normalSvcs=services.filter(s=>s.category===cat.key&&!folderSvcIds.has(s.fid)&&(s.name.toLowerCase().includes(q)||(s.desc||'').toLowerCase().includes(q)));
       if(!folders.length&&!normalSvcs.length) return;
       total+=folders.length+normalSvcs.length;
       html+=`<div class="cat-hdr" style="grid-column:1/-1"><span>${cat.icon}</span>${cat.key}</div>`;
