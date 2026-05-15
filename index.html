@@ -32,7 +32,19 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .stat{background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:11px 18px;min-width:95px;text-align:center;}
 .stat-n{font-family:'Orbitron',sans-serif;font-size:1.3rem;font-weight:700;color:var(--cyan);line-height:1;margin-bottom:3px;}
 .stat-l{font-size:0.7rem;color:var(--muted);}
-.tabs{display:flex;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:5px;margin-bottom:22px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;}
+.tabs{display:none;}
+.site-header{position:fixed;top:0;left:0;right:0;z-index:900;background:rgba(8,11,18,0.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 16px;}
+.site-header-inner{display:flex;align-items:center;justify-content:space-between;height:56px;max-width:900px;margin:0 auto;}
+.site-logo{display:flex;align-items:center;gap:9px;cursor:pointer;text-decoration:none;}
+.site-logo-ic{width:34px;height:34px;background:linear-gradient(135deg,var(--cyan),var(--cyan2));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;}
+.site-logo-txt{font-family:'Orbitron',sans-serif;font-size:0.78rem;font-weight:900;background:linear-gradient(135deg,#fff,var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.site-nav{display:flex;align-items:center;gap:2px;overflow-x:auto;scrollbar-width:none;}
+.site-nav::-webkit-scrollbar{display:none;}
+.nav-btn{padding:6px 12px;border:none;border-radius:8px;background:transparent;color:var(--muted);font-family:'Tajawal',sans-serif;font-size:0.78rem;font-weight:600;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+.nav-btn:hover{color:var(--text);background:rgba(255,255,255,0.06);}
+.nav-btn.active{color:var(--cyan);background:rgba(0,212,255,0.1);}
+.site-header-actions{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.wrap{padding-top:70px;}
 .tabs::-webkit-scrollbar{display:none;}
 .tab{white-space:nowrap;flex-shrink:0;}
 .tab{flex:1;padding:10px 6px;border:none;border-radius:9px;background:transparent;color:var(--muted);font-family:'Tajawal',sans-serif;font-size:0.82rem;font-weight:600;cursor:pointer;transition:all 0.2s;}
@@ -382,18 +394,46 @@ textarea{resize:vertical;min-height:60px;}
     <button id="logoutBtn" onclick="doLogout()" style="padding:6px 13px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-family:'Tajawal',sans-serif;font-size:0.78rem;cursor:pointer;">خروج ←</button>
   </div>
 
-  <!-- TABS -->
-  <div class="tabs" id="mainTabs">
-    <button class="tab active" onclick="switchTab('services')">🛍️ الخدمات</button>
-    <button class="tab" onclick="switchTab('account')">👤 حسابي</button>
-    <button class="tab" onclick="switchTab('payment')">💳 الدفع</button>
-    <button class="tab" id="dashTab" onclick="switchTab('dashboard')" style="display:none;">📊 لوحة المعلومات</button>
-    <button class="tab" id="clientsTab" onclick="switchTab('clients')" style="display:none;">👥 الزبائن</button>
-    <button class="tab" id="chargesTab" onclick="switchTab('charges')" style="display:none;">💳 سجل الشحن</button>
-    <button class="tab" id="ordersTab" onclick="switchTab('orders')" style="display:none;">📋 سجل الطلبات</button>
-    <button class="tab" id="debtTab" onclick="switchTab('debt')" style="display:none;">💸 الديون</button>
-    <button class="tab" id="filesTab" onclick="switchTab('files')" style="display:none;">⚠️ ملفات إصلاح</button>
-    <button class="tab" id="adminTab" onclick="askPin()" style="display:none;">⚙️ الإدارة</button>
+  <!-- SITE HEADER -->
+  <header class="site-header" id="siteHeader">
+    <div class="site-header-inner">
+      <!-- شعار -->
+      <div class="site-logo" onclick="switchTab('services')">
+        <div class="site-logo-ic" id="headerIcon">🔓</div>
+        <div class="site-logo-txt" id="headerTitle">ABADAH UNLOCKER</div>
+      </div>
+
+      <!-- قائمة التنقل -->
+      <nav class="site-nav" id="mainTabs">
+        <button class="nav-btn active" onclick="switchTab('services')">الخدمات</button>
+        <button class="nav-btn" onclick="switchTab('account')" id="navAccount">حسابي</button>
+        <button class="nav-btn" onclick="switchTab('payment')">الدفع</button>
+        <button class="nav-btn" onclick="switchTab('files')">ملفات</button>
+        <button class="nav-btn" id="dashTab" onclick="switchTab('dashboard')" style="display:none;">لوحة التحكم</button>
+        <button class="nav-btn" id="clientsTab" onclick="switchTab('clients')" style="display:none;">الزبائن</button>
+        <button class="nav-btn" id="chargesTab" onclick="switchTab('charges')" style="display:none;">الشحن</button>
+        <button class="nav-btn" id="ordersTab" onclick="switchTab('orders')" style="display:none;">الطلبات</button>
+        <button class="nav-btn" id="debtTab" onclick="switchTab('debt')" style="display:none;">الديون</button>
+        <button class="nav-btn" id="adminTab" onclick="askPin()" style="display:none;">⚙️ الإدارة</button>
+      </nav>
+
+      <!-- أزرار تسجيل الدخول -->
+      <div class="site-header-actions" id="headerActions">
+        <div id="headerUserInfo" style="display:none;align-items:center;gap:8px;">
+          <div style="font-size:0.78rem;color:var(--muted);" id="headerUserName"></div>
+          <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,rgba(0,212,255,0.2),rgba(168,85,247,0.15));border:1px solid rgba(0,212,255,0.3);display:flex;align-items:center;justify-content:center;font-size:13px;">👤</div>
+        </div>
+        <div id="headerGuestBtns" style="display:flex;gap:6px;">
+          <button onclick="showLogin()" style="padding:6px 12px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Tajawal',sans-serif;font-size:0.76rem;cursor:pointer;">🔒 دخول</button>
+          <button onclick="showRegister()" style="padding:6px 12px;background:linear-gradient(135deg,var(--cyan),var(--cyan2));border:none;border-radius:8px;color:#000;font-family:'Tajawal',sans-serif;font-size:0.76rem;font-weight:700;cursor:pointer;">📝 تسجيل</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- تابات مخفية للتوافق -->
+  <div style="display:none;">
+    <button id="filesTab" onclick="switchTab('files')"></button>
   </div>
 
   <!-- SERVICES -->
@@ -1580,6 +1620,23 @@ window.delLiveStatus=async(fid)=>{
 };
 
 function updateUserBar(){
+  // تحديث الهيدر
+  const uName=currentUser?.name||'';
+  const isAdmin=currentUser?.isAdmin||false;
+  const guestBtns=document.getElementById('headerGuestBtns');
+  const userInfo=document.getElementById('headerUserInfo');
+  const headerUserName=document.getElementById('headerUserName');
+  if(guestBtns&&userInfo){
+    if(currentUser){
+      guestBtns.style.display='none';
+      userInfo.style.display='flex';
+      if(headerUserName) headerUserName.textContent=isAdmin?'⚙️ مسؤول':uName;
+    } else {
+      guestBtns.style.display='flex';
+      userInfo.style.display='none';
+    }
+  }
+
   if(!currentUser) return;
   document.getElementById('uName').textContent=currentUser.name;
   if(!currentUser.isAdmin){
@@ -1609,8 +1666,8 @@ function updateStats(){
 
 // ===== TABS =====
 window.switchTab = t => {
-  // إصلاح: مطابقة التاب بالـ onclick مش بالـ index
-  document.querySelectorAll('.tab').forEach(b=>{
+  // تحديث القائمة
+  document.querySelectorAll('.nav-btn,.tab').forEach(b=>{
     const oc=b.getAttribute('onclick')||'';
     const match=oc.match(/switchTab\('([^']+)'\)/);
     const tabName=match?match[1]:(oc.includes('askPin')?'admin':null);
