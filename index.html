@@ -420,14 +420,6 @@ textarea{resize:vertical;min-height:60px;}
         <button class="nav-btn" id="adminTab" onclick="askPin()" style="display:none;">⚙️ الإدارة</button>
       </nav>
 
-      <!-- بحث في الهيدر -->
-      <div id="headerSearch" style="display:none;align-items:center;background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:20px;padding:4px 12px;gap:6px;">
-        <span style="color:var(--muted);font-size:0.8rem;">🔍</span>
-        <input type="text" id="searchSvc" placeholder="ابحث..." 
-          style="background:none;border:none;color:var(--text);font-family:'Tajawal',sans-serif;font-size:0.82rem;width:120px;outline:none;"
-          oninput="(function(){const p=document.getElementById('panel-services');if(p&&!p.classList.contains('active')){document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));p.classList.add('active');document.querySelectorAll('.nav-btn').forEach(b=>{const oc=b.getAttribute('onclick')||'';b.classList.toggle('active',oc.includes("switchTab('services')"));});const cb=document.getElementById('catBar');if(cb)cb.classList.add('visible');}activeCat='';document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));const fb=document.querySelector('.cat-btn');if(fb)fb.classList.add('active');renderServices();})();">
-      </div>
-
       <!-- أزرار تسجيل الدخول -->
       <div class="site-header-actions" id="headerActions">
         <div id="headerUserInfo" style="display:none;align-items:center;gap:8px;">
@@ -465,6 +457,8 @@ textarea{resize:vertical;min-height:60px;}
       <button class="cat-btn" onclick="setCategory(this,'خدمات iCloud')">☁️ خدمات iCloud</button>
       <button class="cat-btn" onclick="setCategory(this,'خدمات حسابات')">👤 خدمات حسابات</button>
     </div>
+
+    <div class="sw" style="margin-bottom:13px;margin-top:8px;"><span class="si">🔍</span><input type="text" id="searchSvc" placeholder="ابحث عن خدمة..." oninput="activeCat='';document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));const fb=document.querySelector('.cat-btn');if(fb)fb.classList.add('active');renderServices();document.getElementById('servicesGrid')?.scrollIntoView&&void 0;"></div>
 
     <!-- الخدمات - عمود واحد عريض -->
     <div class="grid" id="servicesGrid"></div>
@@ -1163,9 +1157,7 @@ const show = (id,d='flex') => document.getElementById(id).style.display=d;
 
 function showLoad(){ show('loadingScreen'); }
 function hideLoad(){ hide('loadingScreen'); }
-function showLogin(){
-  const hs=document.getElementById('headerSearch');
-  if(hs) hs.style.display='flex'; hideLoad(); hide('registerScreen'); hide('pendingScreen'); hide('mainApp'); show('loginScreen'); }
+function showLogin(){ hideLoad(); hide('registerScreen'); hide('pendingScreen'); hide('mainApp'); show('loginScreen'); }
 function showRegister(){ hide('loginScreen'); show('registerScreen'); }
 window.showLogin = showLogin;
 
@@ -1192,9 +1184,6 @@ window.showRegister = showRegister;
 function showPending(){ hide('loginScreen'); hide('registerScreen'); show('pendingScreen'); }
 
 function showApp(){
-  // إظهار بحث الهيدر
-  const hs=document.getElementById('headerSearch');
-  if(hs) hs.style.display='flex';
   hide('loginScreen'); hide('registerScreen'); hide('pendingScreen');
   show('mainApp','block'); hideLoad();
   const isAdmin = currentUser?.isAdmin;
@@ -1739,7 +1728,6 @@ function renderServices(){
   const q=(document.getElementById('searchSvc')?.value||'').toLowerCase();
   const grid=document.getElementById('servicesGrid');
   if(!grid) return;
-
   const cats=[
     {key:'إيجار أدوات',icon:'🔧'},{key:'تفعيل أدوات',icon:'⚡'},
     {key:'خدمات FRP',icon:'🛡️'},{key:'خدمات iCloud',icon:'☁️'},{key:'خدمات حسابات',icon:'👤'}
@@ -1760,8 +1748,8 @@ function renderServices(){
       // نجمع أسماء الخدمات الموجودة في المجلدات
       const folderPlanNames=new Set();
       toolFolders.forEach(f=>(f.plans||[]).forEach(p=>{ if(p.duration||p.desc) folderPlanNames.add((f.name||'').toLowerCase()); }));
-      // عند البحث نعرض المجلدات + الخدمات المطابقة، بدون بحث نخفي الخدمات العادية
-      const normalSvcs=(!toolFolders.length||q)?services.filter(s=>s.active&&s.category===cat.key&&(s.name.toLowerCase().includes(q)||(s.desc||'').toLowerCase().includes(q))):[];
+      // نخفي الخدمات العادية إذا كان هناك مجلدات (لأن المجلدات تعرضها)
+      const normalSvcs=toolFolders.length?[]:services.filter(s=>s.active&&s.category===cat.key&&(s.name.toLowerCase().includes(q)||(s.desc||'').toLowerCase().includes(q)));
       if(!folders.length&&!normalSvcs.length) return;
       total+=folders.length+normalSvcs.length;
       html+=`<div class="cat-hdr" style="grid-column:1/-1"><span>${cat.icon}</span>${cat.key}</div>`;
