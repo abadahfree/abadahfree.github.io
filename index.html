@@ -463,12 +463,12 @@ textarea{resize:vertical;min-height:60px;}
 
     <!-- شريط الفئات الأفقي -->
     <div class="cat-bar" id="catBar">
-      <button class="cat-btn active" onclick="setCategory(this,'')">🔓 الكل</button>
-      <button class="cat-btn" onclick="setCategory(this,'إيجار أدوات')">🔧 إيجار أدوات</button>
-      <button class="cat-btn" onclick="setCategory(this,'تفعيل أدوات')">⚡ تفعيل أدوات</button>
-      <button class="cat-btn" onclick="setCategory(this,'خدمات FRP')">🛡️ خدمات FRP</button>
-      <button class="cat-btn" onclick="setCategory(this,'خدمات iCloud')">☁️ خدمات iCloud</button>
-      <button class="cat-btn" onclick="setCategory(this,'خدمات حسابات')">👤 خدمات حسابات</button>
+      <button class="cat-btn active" onclick="setCategory(this,'')" data-i18n-cat="all">🔓 الكل</button>
+      <button class="cat-btn" onclick="setCategory(this,'إيجار أدوات')" data-i18n-cat="rent">🔧 إيجار أدوات</button>
+      <button class="cat-btn" onclick="setCategory(this,'تفعيل أدوات')" data-i18n-cat="activate">⚡ تفعيل أدوات</button>
+      <button class="cat-btn" onclick="setCategory(this,'خدمات FRP')" data-i18n-cat="frp">🛡️ خدمات FRP</button>
+      <button class="cat-btn" onclick="setCategory(this,'خدمات iCloud')" data-i18n-cat="icloud">☁️ خدمات iCloud</button>
+      <button class="cat-btn" onclick="setCategory(this,'خدمات حسابات')" data-i18n-cat="accounts">👤 خدمات حسابات</button>
     </div>
 
     <div class="sw" style="margin-bottom:13px;margin-top:8px;"><span class="si">🔍</span><input type="text" id="searchSvc" placeholder="ابحث عن خدمة..." oninput="doSearch()"></div>
@@ -1867,7 +1867,7 @@ function renderServices(){
           <div class="svc-desc">${s.desc||'خدمة احترافية سريعة وموثوقة'}</div>
           <div class="svc-row">
             <div class="svc-price">${currentUser?(()=>{const me=clients.find(c=>c.fid===currentUser?.fid);const cur=me?.currency||'LYD';if(cur==='USDT'){const p=(s.price/usdtRate);return p.toFixed(2)+' <span>USDT</span>';}return s.price.toLocaleString('ar-LY')+' <span>د.ل</span>';})():'<span style="font-size:0.75rem;color:var(--muted);">🔒 سجّل للعرض</span>'}</div>
-            <button class="btn-order" onclick="openOrder('${s.fid}')">اطلب الخدمة</button>
+            <button class="btn-order" onclick="openOrder('${s.fid}')">${t('orderBtn')}</button>
           </div>
         </div>`).join('');
       }
@@ -1889,8 +1889,8 @@ function renderServices(){
         <div class="svc-row">
           <div class="svc-price">${currentUser?(()=>{const me=clients.find(c=>c.fid===currentUser?.fid);const cur=me?.currency||'LYD';if(cur==='USDT'){const p=(s.price/usdtRate);return p.toFixed(2)+' <span>USDT</span>';}return s.price.toLocaleString('ar-LY')+' <span>د.ل</span>';})():'<span style="font-size:0.75rem;color:var(--muted);">🔒 سجّل للعرض</span>'}</div>
           ${s.active
-            ?`<button class="btn-order" onclick="openOrder('${s.fid}')">اطلب الخدمة</button>`
-            :`<button class="btn-order" onclick="openOrder('${s.fid}')">اطلب الخدمة</button>`}
+            ?`<button class="btn-order" onclick="openOrder('${s.fid}')">${t('orderBtn')}</button>`
+            :`<button class="btn-order" onclick="openOrder('${s.fid}')">${t('orderBtn')}</button>`}
         </div>
       </div>`).join('');
   });
@@ -3233,6 +3233,8 @@ const translations = {
     noServices: 'لا توجد خدمات', loading: 'جاري التحميل...',
     hero: 'ABADAH UNLOCKER', heroSub: 'Professional IMEI & Mobile Services',
     browseBtn: '⚙️ تصفح الخدمات', payBtn: '💳 الدفع',
+    cat_all: '🔓 الكل', cat_rent: '🔧 إيجار أدوات', cat_activate: '⚡ تفعيل أدوات',
+    cat_frp: '🛡️ خدمات FRP', cat_icloud: '☁️ خدمات iCloud', cat_accounts: '👤 خدمات حسابات',
   },
   en: {
     services: 'Services', account: 'My Account', payment: 'Payment',
@@ -3244,6 +3246,8 @@ const translations = {
     noServices: 'No services found', loading: 'Loading...',
     hero: 'ABADAH UNLOCKER', heroSub: 'Professional IMEI & Mobile Services',
     browseBtn: '⚙️ Browse Services', payBtn: '💳 Payment',
+    cat_all: '🔓 All', cat_rent: '🔧 Tool Rental', cat_activate: '⚡ Tool Activation',
+    cat_frp: '🛡️ FRP Services', cat_icloud: '☁️ iCloud Services', cat_accounts: '👤 Account Services',
   }
 };
 
@@ -3265,9 +3269,14 @@ window.setLang = function(lang){
 };
 
 function applyTranslations(){
-  // ترجمة كل العناصر بـ data-i18n
+  // ترجمة data-i18n
   document.querySelectorAll('[data-i18n]').forEach(el=>{
     const key=el.getAttribute('data-i18n');
+    if(translations[currentLang]?.[key]) el.textContent=translations[currentLang][key];
+  });
+  // ترجمة فئات الخدمات
+  document.querySelectorAll('[data-i18n-cat]').forEach(el=>{
+    const key='cat_'+el.getAttribute('data-i18n-cat');
     if(translations[currentLang]?.[key]) el.textContent=translations[currentLang][key];
   });
   // البحث
@@ -3276,7 +3285,8 @@ function applyTranslations(){
   // Hero subtitle
   const heroSub=document.querySelector('#heroSection p');
   if(heroSub&&currentLang==='en') heroSub.textContent='Unlock, repair, and service your mobile devices with professional GSM solutions.';
-  else if(heroSub) heroSub.textContent='خدمات فك القفل واصلاح الأجهزة المحمولة باحترافية.';
+  else if(heroSub) heroSub.textContent='خدمات فك القفل وإصلاح الأجهزة المحمولة باحترافية.';
+  // إعادة رسم الخدمات لتحديث زر "اطلب الخدمة"
 }
 
 // تطبيق اللغة عند التحميل
