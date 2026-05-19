@@ -3236,6 +3236,25 @@ function resetColors(){
 }
 function loadSavedColors(){
   try{
+    // تطبيق الألوان الافتراضية الجديدة أولاً
+    const defaults = {
+      '--bg':'#f0f4f8',
+      '--surface':'#ffffff',
+      '--card':'#f8fafc',
+      '--border':'#e2e8f0',
+      '--cyan':'#0ea5e9',
+      '--cyan2':'#0284c7',
+      '--gold':'#f59e0b',
+      '--green':'#10b981',
+      '--red':'#ef4444',
+      '--text':'#1a202c',
+      '--text2':'#4a5568',
+      '--muted':'#94a3b8',
+    };
+    Object.entries(defaults).forEach(([k,v])=>{
+      document.documentElement.style.setProperty(k,v);
+    });
+    // ثم تطبيق الألوان المحفوظة إن وجدت
     const colors=JSON.parse(localStorage.getItem('site_colors')||'{}');
     Object.entries(colors).forEach(([k,v])=>{
       if(COLOR_VARS[k]) document.documentElement.style.setProperty(COLOR_VARS[k],v);
