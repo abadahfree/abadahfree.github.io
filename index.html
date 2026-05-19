@@ -146,6 +146,13 @@ textarea{resize:vertical;min-height:60px;}
 .rating-stars{display:flex;gap:6px;justify-content:center;margin:8px 0;}
 .rating-stars span{font-size:1.5rem;cursor:pointer;opacity:0.35;transition:opacity 0.15s;}
 .rating-stars span.active,.rating-stars span:hover{opacity:1;}
+/* ===== ديكور دوائر التحميل ===== */
+@keyframes spin-ring{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+@keyframes spin-ring-r{0%{transform:rotate(0)}100%{transform:rotate(-360deg)}}
+@keyframes ring-pulse{0%,100%{opacity:0.15}50%{opacity:0.35}}
+
+.decor-layer{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+
 .top-client-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);}
 .top-client-row:last-child{border-bottom:none;}
 .lang-btn{padding:5px 10px;border:1px solid var(--border);border-radius:20px;background:transparent;color:var(--muted);font-family:'Tajawal',sans-serif;font-size:0.75rem;cursor:pointer;transition:all 0.2s;}
@@ -247,6 +254,64 @@ textarea{resize:vertical;min-height:60px;}
 <body>
 
 <!-- LOADING -->
+<div class="decor-layer" id="decorLayer">
+  <!-- دائرة FRP -->
+  <div style="position:absolute;top:15%;left:8%;width:70px;height:70px;">
+    <svg viewBox="0 0 50 50" style="width:100%;height:100%;animation:spin-ring 3s linear infinite;opacity:0.18;">
+      <circle cx="25" cy="25" r="20" fill="none" stroke="#8040ff" stroke-width="2.5" stroke-dasharray="90,200" stroke-linecap="round"/>
+    </svg>
+    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Orbitron',sans-serif;font-size:0.38rem;color:rgba(128,64,255,0.4);letter-spacing:1px;">FRP</div>
+  </div>
+  <!-- دائرة MDM -->
+  <div style="position:absolute;top:8%;right:10%;width:80px;height:80px;">
+    <svg viewBox="0 0 50 50" style="width:100%;height:100%;animation:spin-ring-r 4s linear infinite;opacity:0.15;">
+      <circle cx="25" cy="25" r="20" fill="none" stroke="#40c0ff" stroke-width="2.5" stroke-dasharray="70,200" stroke-linecap="round"/>
+    </svg>
+    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Orbitron',sans-serif;font-size:0.38rem;color:rgba(64,192,255,0.4);letter-spacing:1px;">MDM</div>
+  </div>
+  <!-- دائرة BL -->
+  <div style="position:absolute;bottom:25%;left:5%;width:60px;height:60px;">
+    <svg viewBox="0 0 50 50" style="width:100%;height:100%;animation:spin-ring 2s linear infinite;opacity:0.15;">
+      <circle cx="25" cy="25" r="20" fill="none" stroke="#c080ff" stroke-width="2.5" stroke-dasharray="110,200" stroke-linecap="round"/>
+    </svg>
+    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Orbitron',sans-serif;font-size:0.35rem;color:rgba(192,128,255,0.4);">BL</div>
+  </div>
+  <!-- دائرة iCloud -->
+  <div style="position:absolute;bottom:20%;right:6%;width:75px;height:75px;">
+    <svg viewBox="0 0 50 50" style="width:100%;height:100%;animation:spin-ring-r 5s linear infinite;opacity:0.12;">
+      <circle cx="25" cy="25" r="20" fill="none" stroke="#8040ff" stroke-width="2.5" stroke-dasharray="80,200" stroke-linecap="round"/>
+    </svg>
+    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Orbitron',sans-serif;font-size:0.3rem;color:rgba(128,64,255,0.35);">iCloud</div>
+  </div>
+  <!-- دائرة SN -->
+  <div style="position:absolute;top:45%;left:2%;width:50px;height:50px;">
+    <svg viewBox="0 0 50 50" style="width:100%;height:100%;animation:spin-ring 2.5s linear infinite;opacity:0.12;">
+      <circle cx="25" cy="25" r="20" fill="none" stroke="#40c0ff" stroke-width="2" stroke-dasharray="60,200" stroke-linecap="round"/>
+    </svg>
+    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Orbitron',sans-serif;font-size:0.32rem;color:rgba(64,192,255,0.35);">SN</div>
+  </div>
+  <!-- دائرة IMEI -->
+  <div style="position:absolute;top:40%;right:2%;width:65px;height:65px;">
+    <svg viewBox="0 0 50 50" style="width:100%;height:100%;animation:spin-ring-r 3.5s linear infinite;opacity:0.12;">
+      <circle cx="25" cy="25" r="20" fill="none" stroke="#c080ff" stroke-width="2" stroke-dasharray="100,200" stroke-linecap="round"/>
+    </svg>
+    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Orbitron',sans-serif;font-size:0.3rem;color:rgba(192,128,255,0.35);">IMEI</div>
+  </div>
+  <!-- دائرة ADB صغيرة -->
+  <div style="position:absolute;top:70%;left:35%;width:45px;height:45px;">
+    <svg viewBox="0 0 50 50" style="width:100%;height:100%;animation:spin-ring 1.8s linear infinite;opacity:0.1;">
+      <circle cx="25" cy="25" r="20" fill="none" stroke="#8040ff" stroke-width="2" stroke-dasharray="50,200" stroke-linecap="round"/>
+    </svg>
+    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Orbitron',sans-serif;font-size:0.3rem;color:rgba(128,64,255,0.3);">ADB</div>
+  </div>
+  <!-- دائرة USB -->
+  <div style="position:absolute;top:25%;left:45%;width:55px;height:55px;">
+    <svg viewBox="0 0 50 50" style="width:100%;height:100%;animation:spin-ring-r 4.5s linear infinite;opacity:0.1;">
+      <circle cx="25" cy="25" r="20" fill="none" stroke="#40c0ff" stroke-width="2" stroke-dasharray="75,200" stroke-linecap="round"/>
+    </svg>
+    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Orbitron',sans-serif;font-size:0.3rem;color:rgba(64,192,255,0.3);">USB</div>
+  </div>
+</div>
 <div id="loadingScreen" style="background:var(--bg);">
   <div style="text-align:center;">
     <!-- SVG دائرة -->
