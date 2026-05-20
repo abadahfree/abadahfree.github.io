@@ -627,20 +627,25 @@ textarea{resize:vertical;min-height:60px;}
 
 <header class="site-header" id="siteHeader">
     <div class="site-header-inner">
+      <!-- زر الهامبرغر -->
+      <button class="hamburger" onclick="openDrawer()" style="margin-left:8px;">
+        <span></span><span></span><span></span>
+      </button>
+
       <!-- شعار -->
-      <div class="site-logo" onclick="switchTab('services')">
+      <div class="site-logo" onclick="switchTab('services')" style="flex:1;justify-content:center;">
         <div class="site-logo-ic" id="headerIcon">🔓</div>
         <div class="site-logo-txt" id="headerTitle">ABADAH UNLOCKER</div>
       </div>
 
       <!-- زر اللغة -->
-      <div style="display:flex;gap:4px;margin-left:8px;flex-shrink:0;">
+      <div style="display:flex;gap:4px;margin-right:8px;flex-shrink:0;">
         <button class="lang-btn active" onclick="setLang('ar')" id="btnAr">ع</button>
         <button class="lang-btn" onclick="setLang('en')" id="btnEn">EN</button>
       </div>
 
-      <!-- قائمة التنقل -->
-      <nav class="site-nav" id="mainTabs">
+      <!-- قائمة التنقل مخفية -->
+      <nav class="site-nav" id="mainTabs" style="display:none;">
         <button class="nav-btn active" onclick="switchTab('services')" data-i18n="services">الخدمات</button>
         <button class="nav-btn" onclick="switchTab('account')" id="navAccount" data-i18n="account">حسابي</button>
         <button class="nav-btn" onclick="switchTab('payment')" data-i18n="payment">الدفع</button>
