@@ -3488,14 +3488,10 @@ async function renderDebts(){
 function openDrawer(){
   const d=document.getElementById('mainDrawer');
   const o=document.getElementById('drawerOverlay');
-  d.style.zIndex='99999';
-  o.style.zIndex='99998';
-  o.style.display='block';
-  setTimeout(()=>{
-    d.style.left='0px';
-    o.style.opacity='1';
-    o.style.pointerEvents='all';
-  },10);
+  if(!d){alert('❌ mainDrawer غير موجود!');return;}
+  // تطبيق مباشر بدون animation
+  d.style.cssText='position:fixed!important;top:0!important;left:0!important;width:280px!important;height:100vh!important;background:var(--surface)!important;z-index:999999!important;overflow-y:auto!important;box-shadow:4px 0 20px rgba(0,0,0,0.5)!important;transition:none!important;';
+  o.style.cssText='position:fixed!important;inset:0!important;background:rgba(0,0,0,0.6)!important;z-index:999998!important;display:block!important;opacity:1!important;pointer-events:all!important;';
   document.body.style.overflow='hidden';
   // تحديث بيانات المستخدم
   if(currentUser){
