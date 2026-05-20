@@ -1728,7 +1728,7 @@ window.doLogin = async () => {
       resetFails();
       currentUser={name:'عبادة (مسؤول)',email,isAdmin:true,fid:'admin'};
       localStorage.setItem('au_sess',JSON.stringify(currentUser));
-      showApp(); return;
+      showApp(); setTimeout(()=>{if(typeof abUpdateDrawer==='function')abUpdateDrawer();},300); return;
     } else {
       const n=recordFail();
       const rem=5-n;
@@ -1748,7 +1748,7 @@ window.doLogin = async () => {
     if(c.status==='rejected'){ document.getElementById('liErr').textContent='❌ تم رفض حسابك، تواصل مع المسؤول'; btn.textContent='🔓 تسجيل الدخول'; btn.disabled=false; return; }
     currentUser={name:c.name,email:c.email,phone:c.phone,fid:cd.id,isAdmin:false};
     localStorage.setItem('au_sess',JSON.stringify(currentUser));
-    showApp();
+    showApp(); setTimeout(()=>{if(typeof abUpdateDrawer==='function')abUpdateDrawer();},300);
   } catch(e){
     document.getElementById('liErr').textContent='خطأ في الاتصال';
     btn.textContent='🔓 تسجيل الدخول'; btn.disabled=false;
