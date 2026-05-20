@@ -4161,24 +4161,56 @@ window.dismissBanner=()=>{document.getElementById('installBanner').classList.rem
     <button class="ab-d-item" onclick="abNav('admin')">
       <div class="ab-d-ic" style="background:rgba(139,92,246,0.12);">⚙️</div>الإعدادات
     </button>
+    <div class="ab-d-hr"></div>
+    <div class="ab-d-sec">الزبائن</div>
+    <button class="ab-d-item" onclick="abNav('registrations')">
+      <div class="ab-d-ic" style="background:rgba(16,185,129,0.12);">✅</div>قبول الزبائن
+    </button>
+    <button class="ab-d-item" onclick="abNav('transactions')">
+      <div class="ab-d-ic" style="background:rgba(14,165,233,0.12);">💳</div>دفعات الزبائن
+    </button>
   </div>
 </div>
 
 <script>
+function abUpdateDrawer(){
+  const u = (typeof currentUser !== 'undefined') ? currentUser : null;
+  const nameEl = document.getElementById('abDName');
+  const roleEl = document.getElementById('abDRole');
+  const avEl   = document.getElementById('abDAv');
+  const hdrEl  = document.getElementById('abDHdr');
+  const admEl  = document.getElementById('abAdminSec');
+  const admHr  = document.getElementById('abAdminHr');
+  if(!nameEl) return;
+  if(u && u.name){
+    nameEl.textContent = u.name;
+    if(u.isAdmin){
+      roleEl.textContent = 'مسؤول النظام';
+      avEl.textContent   = '⚙️';
+      hdrEl.style.background = '#1e1b4b';
+      if(admEl){ admEl.style.display='block'; }
+      if(admHr){ admHr.style.display='block'; }
+    } else {
+      roleEl.textContent = 'رصيد: '+(u.balance||0)+' د.ل';
+      avEl.textContent   = '👤';
+      hdrEl.style.background = 'var(--cyan,#0ea5e9)';
+      if(admEl){ admEl.style.display='none'; }
+      if(admHr){ admHr.style.display='none'; }
+    }
+  } else {
+    nameEl.textContent = 'مرحباً بك';
+    roleEl.textContent = 'سجّل دخولك';
+    avEl.textContent   = '👋';
+    hdrEl.style.background = 'var(--cyan,#0ea5e9)';
+    if(admEl){ admEl.style.display='none'; }
+    if(admHr){ admHr.style.display='none'; }
+  }
+}
 function abOpenDrawer(){
   document.getElementById('abDrawer').classList.add('show');
   document.getElementById('abOverlay').classList.add('show');
   document.body.style.overflow='hidden';
-  // تحديث بيانات المستخدم
-  if(typeof currentUser !== 'undefined' && currentUser){
-    document.getElementById('abDName').textContent = currentUser.name || 'المستخدم';
-    document.getElementById('abDRole').textContent = currentUser.isAdmin ? 'مسؤول النظام' : 'رصيد: '+(currentUser.balance||0)+' د.ل';
-    document.getElementById('abDAv').textContent = currentUser.isAdmin ? '⚙️' : '👤';
-    if(currentUser.isAdmin){
-      document.getElementById('abAdminSec').style.display='block';
-      document.getElementById('abAdminHr').style.display='block';
-    }
-  }
+  abUpdateDrawer();
 }
 function abCloseDrawer(){
   document.getElementById('abDrawer').classList.remove('show');
