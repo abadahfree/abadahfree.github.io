@@ -1373,33 +1373,22 @@ function showPending(){ hide('loginScreen'); hide('registerScreen'); show('pendi
 
 function showApp(){
   hide('loginScreen'); hide('registerScreen'); hide('pendingScreen');
-  // تحديث الـ Drawer
-  setTimeout(()=>{
-    const u = currentUser;
-    const nameEl=document.getElementById('abDName');
-    const roleEl=document.getElementById('abDRole');
-    const avEl=document.getElementById('abDAv');
-    const hdrEl=document.getElementById('abDHdr');
-    const admEl=document.getElementById('abAdminSec');
-    const admHr=document.getElementById('abAdminHr');
-    if(!nameEl) return;
-    if(u && u.name){
-      nameEl.textContent=u.name;
-      if(u.isAdmin){
-        roleEl.textContent='مسؤول النظام';
-        avEl.textContent='⚙️';
-        if(hdrEl) hdrEl.style.background='#1e1b4b';
-        if(admEl) admEl.style.display='block';
-        if(admHr) admHr.style.display='block';
-      } else {
-        roleEl.textContent='رصيد: '+(u.balance||0)+' د.ل';
-        avEl.textContent='👤';
-        if(hdrEl) hdrEl.style.background='#0ea5e9';
-        if(admEl) admEl.style.display='none';
-        if(admHr) admHr.style.display='none';
-      }
-    }
-  }, 400);
+  // تحديث الـ Drawer - محاولات متعددة
+  [300,700,1500].forEach(delay=>{
+    setTimeout(()=>{
+      const u = currentUser;
+      if(!u) return;
+      ['abDName','abDRole','abDAv','abDHdr','abAdminSec','abAdminHr'].forEach(id=>{
+        const el=document.getElementById(id);
+        if(!el) return;
+        if(id==='abDName') el.textContent=u.name||'المستخدم';
+        else if(id==='abDRole') el.textContent=u.isAdmin?'مسؤول النظام':'رصيد: '+(u.balance||0)+' د.ل';
+        else if(id==='abDAv') el.textContent=u.isAdmin?'⚙️':'👤';
+        else if(id==='abDHdr') el.style.background=u.isAdmin?'#1e1b4b':'#0ea5e9';
+        else if(id==='abAdminSec'||id==='abAdminHr') el.style.display=u.isAdmin?'block':'none';
+      });
+    }, delay);
+  });
   show('mainApp','block'); hideLoad();
   const isAdmin = currentUser?.isAdmin;
   document.getElementById('adminTab').style.display = isAdmin ? 'flex' : 'none';
@@ -4237,7 +4226,30 @@ function abOpenDrawer(){
   document.getElementById('abDrawer').classList.add('show');
   document.getElementById('abOverlay').classList.add('show');
   document.body.style.overflow='hidden';
-  abUpdateDrawer();
+  // تحديث مباشر عند الفتح
+  const u=currentUser;
+  const n=document.getElementById('abDName');
+  const r=document.getElementById('abDRole');
+  const a=document.getElementById('abDAv');
+  const h=document.getElementById('abDHdr');
+  const s=document.getElementById('abAdminSec');
+  const hr=document.getElementById('abAdminHr');
+  if(n){
+    if(u&&u.name){
+      n.textContent=u.name;
+      r.textContent=u.isAdmin?'مسؤول النظام':'رصيد: '+(u.balance||0)+' د.ل';
+      a.textContent=u.isAdmin?'⚙️':'👤';
+      if(h) h.style.background=u.isAdmin?'#1e1b4b':'#0ea5e9';
+      if(s) s.style.setProperty('display', u.isAdmin?'block':'none', 'important');
+      if(hr) hr.style.setProperty('display', u.isAdmin?'block':'none', 'important');
+    } else {
+      n.textContent='مرحباً بك';
+      r.textContent='سجّل دخولك';
+      a.textContent='👋';
+      if(s) s.style.setProperty('display','none','important');
+      if(hr) hr.style.setProperty('display','none','important');
+    }
+  }
 }
 function abCloseDrawer(){
   document.getElementById('abDrawer').classList.remove('show');
