@@ -526,7 +526,7 @@ textarea{resize:vertical;min-height:60px;}
 <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
 
 <!-- Drawer -->
-<div class="drawer" id="mainDrawer">
+<div class="drawer" id="mainDrawer" style="left:-300px;display:block;">
   <!-- هيدر الـ Drawer -->
   <div class="drawer-header" id="drawerHeader">
     <div class="drawer-avatar" id="drawerAvatar">👤</div>
@@ -3486,8 +3486,12 @@ async function renderDebts(){
 
 // ===== DRAWER =====
 function openDrawer(){
-  document.getElementById('mainDrawer').classList.add('open');
-  document.getElementById('drawerOverlay').classList.add('open');
+  const d=document.getElementById('mainDrawer');
+  const o=document.getElementById('drawerOverlay');
+  d.style.left='0';
+  d.style.display='block';
+  o.style.opacity='1';
+  o.style.pointerEvents='all';
   document.body.style.overflow='hidden';
   // تحديث بيانات المستخدم
   if(currentUser){
@@ -3507,8 +3511,11 @@ function openDrawer(){
   }
 }
 function closeDrawer(){
-  document.getElementById('mainDrawer').classList.remove('open');
-  document.getElementById('drawerOverlay').classList.remove('open');
+  const d=document.getElementById('mainDrawer');
+  const o=document.getElementById('drawerOverlay');
+  d.style.left='-300px';
+  o.style.opacity='0';
+  o.style.pointerEvents='none';
   document.body.style.overflow='';
 }
 function drawerNav(tab){
