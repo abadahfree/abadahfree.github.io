@@ -3458,19 +3458,35 @@ let isDark = localStorage.getItem('theme') === 'dark';
 function applyTheme(){
   const root = document.documentElement;
   const btn = document.getElementById('themeToggle');
+
+  // تطبيق الألوان مباشرة على :root
   if(isDark){
     root.classList.add('dark');
-    if(btn) btn.textContent = '☀️';
-    if(btn) btn.title = 'الوضع الفاتح';
+    root.style.setProperty('--bg','#060014');
+    root.style.setProperty('--surface','#0d0028');
+    root.style.setProperty('--card','#0a001e');
+    root.style.setProperty('--border','rgba(14,165,233,0.15)');
+    root.style.setProperty('--text','#e0f0ff');
+    root.style.setProperty('--text2','#8090b0');
+    root.style.setProperty('--muted','#4a6080');
+    document.body.style.background = '#060014';
+    if(btn){ btn.textContent='☀️'; btn.title='الوضع الفاتح'; }
   } else {
     root.classList.remove('dark');
-    if(btn) btn.textContent = '🌙';
-    if(btn) btn.title = 'الوضع الداكن';
+    root.style.setProperty('--bg','#f0f4f8');
+    root.style.setProperty('--surface','#ffffff');
+    root.style.setProperty('--card','#f8fafc');
+    root.style.setProperty('--border','#e2e8f0');
+    root.style.setProperty('--text','#1a202c');
+    root.style.setProperty('--text2','#4a5568');
+    root.style.setProperty('--muted','#94a3b8');
+    document.body.style.background = '#f0f4f8';
+    if(btn){ btn.textContent='🌙'; btn.title='الوضع الداكن'; }
   }
+
   // تحديث زر الـ Drawer
-  const dBtn = document.getElementById('drawerThemeBtn');
-  const dIc = dBtn ? dBtn.querySelector('.ab-d-ic') : null;
   const dTxt = document.getElementById('drawerThemeTxt');
+  const dIc = document.getElementById('drawerThemeBtn')?.querySelector('.ab-d-ic');
   if(dTxt) dTxt.textContent = isDark ? 'الوضع الفاتح' : 'الوضع الداكن';
   if(dIc) dIc.textContent = isDark ? '☀️' : '🌙';
 }
