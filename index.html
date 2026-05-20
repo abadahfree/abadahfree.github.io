@@ -33,7 +33,30 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .stat-n{font-family:'Orbitron',sans-serif;font-size:1.3rem;font-weight:700;color:var(--cyan);line-height:1;margin-bottom:3px;}
 .stat-l{font-size:0.7rem;color:var(--muted);}
 .tabs{display:none;}
-.site-header{position:fixed;top:0;left:0;right:0;z-index:900;background:rgba(255,255,255,0.98);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 16px;}
+.site-header{position:fixed;top:0;left:0;right:0;z-index:900;background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;}
+
+/* ===== Drawer ===== */
+.drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;opacity:0;pointer-events:none;transition:opacity 0.3s;}
+.drawer-overlay.open{opacity:1;pointer-events:all;}
+.drawer{position:fixed;top:0;right:-300px;width:280px;height:100%;background:var(--surface);z-index:1001;transition:right 0.3s cubic-bezier(0.4,0,0.2,1);overflow-y:auto;box-shadow:-4px 0 20px rgba(0,0,0,0.2);}
+.drawer.open{right:0;}
+.drawer-header{padding:20px 16px 16px;background:var(--cyan);display:flex;align-items:center;gap:12px;}
+.drawer-avatar{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;border:2px solid rgba(255,255,255,0.3);}
+.drawer-user{flex:1;}
+.drawer-name{font-size:0.9rem;font-weight:700;color:#fff;}
+.drawer-role{font-size:0.7rem;color:rgba(255,255,255,0.75);margin-top:2px;}
+.drawer-section{padding:8px 0;}
+.drawer-section-title{padding:8px 16px 4px;font-size:0.65rem;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+.drawer-item{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;cursor:pointer;transition:background 0.15s;border:none;background:transparent;width:100%;text-align:right;font-family:'Tajawal',sans-serif;}
+.drawer-item:hover{background:rgba(0,0,0,0.04);}
+.drawer-item.active{background:rgba(14,165,233,0.08);border-right:3px solid var(--cyan);}
+.drawer-item-left{display:flex;align-items:center;gap:10px;}
+.drawer-item-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.9rem;}
+.drawer-item-text{font-size:0.82rem;font-weight:600;color:var(--text);}
+.drawer-item-arrow{color:var(--muted);font-size:0.7rem;}
+.drawer-divider{height:1px;background:var(--border);margin:4px 0;}
+.hamburger{width:36px;height:36px;border-radius:8px;background:transparent;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;}
+.hamburger span{display:block;width:20px;height:2px;background:var(--text);border-radius:2px;transition:all 0.2s;}
 .site-header-inner{display:flex;align-items:center;justify-content:space-between;height:56px;max-width:900px;margin:0 auto;}
 .site-logo{display:flex;align-items:center;gap:9px;cursor:pointer;text-decoration:none;}
 .site-logo-ic{width:34px;height:34px;background:linear-gradient(135deg,var(--cyan),var(--cyan2));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;}
@@ -499,7 +522,110 @@ textarea{resize:vertical;min-height:60px;}
   </div>
 
   <!-- SITE HEADER -->
-  <header class="site-header" id="siteHeader">
+  <!-- Drawer Overlay -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+
+<!-- Drawer -->
+<div class="drawer" id="mainDrawer">
+  <!-- هيدر الـ Drawer -->
+  <div class="drawer-header" id="drawerHeader">
+    <div class="drawer-avatar" id="drawerAvatar">👤</div>
+    <div class="drawer-user">
+      <div class="drawer-name" id="drawerName">مرحباً</div>
+      <div class="drawer-role" id="drawerRole">زائر</div>
+    </div>
+  </div>
+
+  <!-- قسم الخدمات -->
+  <div class="drawer-section">
+    <div class="drawer-section-title">الخدمات</div>
+    <button class="drawer-item active" id="dItem-services" onclick="drawerNav('services')">
+      <div class="drawer-item-left">
+        <div class="drawer-item-icon" style="background:rgba(14,165,233,0.1);">🔓</div>
+        <span class="drawer-item-text">الخدمات</span>
+      </div>
+      <span class="drawer-item-arrow">›</span>
+    </button>
+    <button class="drawer-item" id="dItem-payment" onclick="drawerNav('payment')">
+      <div class="drawer-item-left">
+        <div class="drawer-item-icon" style="background:rgba(16,185,129,0.1);">💳</div>
+        <span class="drawer-item-text">الدفع</span>
+      </div>
+      <span class="drawer-item-arrow">›</span>
+    </button>
+    <button class="drawer-item" id="dItem-files" onclick="drawerNav('files')">
+      <div class="drawer-item-left">
+        <div class="drawer-item-icon" style="background:rgba(245,158,11,0.1);">📁</div>
+        <span class="drawer-item-text">ملفاتي</span>
+      </div>
+      <span class="drawer-item-arrow">›</span>
+    </button>
+  </div>
+
+  <div class="drawer-divider"></div>
+
+  <!-- قسم الحساب -->
+  <div class="drawer-section">
+    <div class="drawer-section-title">حسابي</div>
+    <button class="drawer-item" id="dItem-account" onclick="drawerNav('account')">
+      <div class="drawer-item-left">
+        <div class="drawer-item-icon" style="background:rgba(139,92,246,0.1);">👤</div>
+        <span class="drawer-item-text">ملفي الشخصي</span>
+      </div>
+      <span class="drawer-item-arrow">›</span>
+    </button>
+  </div>
+
+  <!-- قسم الإدارة (للمسؤول فقط) -->
+  <div class="drawer-divider" id="drawerAdminDiv" style="display:none;"></div>
+  <div class="drawer-section" id="drawerAdminSection" style="display:none;">
+    <div class="drawer-section-title">الإدارة</div>
+    <button class="drawer-item" id="dItem-dashboard" onclick="drawerNav('dashboard')">
+      <div class="drawer-item-left">
+        <div class="drawer-item-icon" style="background:rgba(14,165,233,0.1);">📊</div>
+        <span class="drawer-item-text">لوحة التحكم</span>
+      </div>
+      <span class="drawer-item-arrow">›</span>
+    </button>
+    <button class="drawer-item" id="dItem-clients" onclick="drawerNav('clients')">
+      <div class="drawer-item-left">
+        <div class="drawer-item-icon" style="background:rgba(16,185,129,0.1);">👥</div>
+        <span class="drawer-item-text">الزبائن</span>
+      </div>
+      <span class="drawer-item-arrow">›</span>
+    </button>
+    <button class="drawer-item" id="dItem-orders" onclick="drawerNav('orders')">
+      <div class="drawer-item-left">
+        <div class="drawer-item-icon" style="background:rgba(245,158,11,0.1);">📋</div>
+        <span class="drawer-item-text">الطلبات</span>
+      </div>
+      <span class="drawer-item-arrow">›</span>
+    </button>
+    <button class="drawer-item" id="dItem-charges" onclick="drawerNav('charges')">
+      <div class="drawer-item-left">
+        <div class="drawer-item-icon" style="background:rgba(239,68,68,0.1);">💸</div>
+        <span class="drawer-item-text">الشحن</span>
+      </div>
+      <span class="drawer-item-arrow">›</span>
+    </button>
+    <button class="drawer-item" id="dItem-debts" onclick="drawerNav('debts')">
+      <div class="drawer-item-left">
+        <div class="drawer-item-icon" style="background:rgba(239,68,68,0.1);">📒</div>
+        <span class="drawer-item-text">الديون</span>
+      </div>
+      <span class="drawer-item-arrow">›</span>
+    </button>
+    <button class="drawer-item" onclick="drawerNav('admin')">
+      <div class="drawer-item-left">
+        <div class="drawer-item-icon" style="background:rgba(139,92,246,0.1);">⚙️</div>
+        <span class="drawer-item-text">الإعدادات</span>
+      </div>
+      <span class="drawer-item-arrow">›</span>
+    </button>
+  </div>
+</div>
+
+<header class="site-header" id="siteHeader">
     <div class="site-header-inner">
       <!-- شعار -->
       <div class="site-logo" onclick="switchTab('services')">
@@ -3351,6 +3477,44 @@ async function renderDebts(){
         </div>
       </div>
     </div>`).join('');
+}
+
+// ===== DRAWER =====
+function openDrawer(){
+  document.getElementById('mainDrawer').classList.add('open');
+  document.getElementById('drawerOverlay').classList.add('open');
+  document.body.style.overflow='hidden';
+  // تحديث بيانات المستخدم
+  if(currentUser){
+    document.getElementById('drawerName').textContent = currentUser.name||'المستخدم';
+    document.getElementById('drawerRole').textContent = currentUser.isAdmin?'مسؤول النظام':('رصيد: '+(currentUser.balance||0)+' د.ل');
+    document.getElementById('drawerAvatar').textContent = currentUser.isAdmin?'⚙️':'👤';
+    document.getElementById('drawerHeader').style.background = currentUser.isAdmin?'#1a1a2e':'var(--cyan)';
+    // إظهار قسم الإدارة
+    if(currentUser.isAdmin){
+      document.getElementById('drawerAdminSection').style.display='block';
+      document.getElementById('drawerAdminDiv').style.display='block';
+    }
+  } else {
+    document.getElementById('drawerName').textContent = 'مرحباً بك';
+    document.getElementById('drawerRole').textContent = 'تصفح كزائر';
+    document.getElementById('drawerAvatar').textContent = '👋';
+  }
+}
+function closeDrawer(){
+  document.getElementById('mainDrawer').classList.remove('open');
+  document.getElementById('drawerOverlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+function drawerNav(tab){
+  closeDrawer();
+  setTimeout(()=>{
+    // تحديث الـ active في الـ Drawer
+    document.querySelectorAll('.drawer-item').forEach(i=>i.classList.remove('active'));
+    const activeItem = document.getElementById('dItem-'+tab);
+    if(activeItem) activeItem.classList.add('active');
+    switchTab(tab);
+  },200);
 }
 
 // ===== اللغة =====
